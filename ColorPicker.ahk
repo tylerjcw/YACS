@@ -32,7 +32,7 @@
 ColorPicker(clip := True)
 {
     ; Configuration variables
-    fontName        := "Maple Mono" ; Can be any font installed on your system
+    fontName        := "Consolas" ; Can be any font installed on your system
     fontSize        := 16           ; Font size for the preview text
     viewMode        := "grid"      ; Can be "crosshair" or "grid"
     updateInterval  := 16           ; The interval at which the preview will update, in milliseconds. 16ms = ~60 updates / second.
