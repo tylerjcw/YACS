@@ -1,4 +1,3 @@
-#Requires AutoHotkey v2.0
 /**
  * Enables a color selector and shows a configurable preview of the area around the mouse cursor.
  * The preview follows the mouse and updates in real-time.
@@ -13,8 +12,8 @@
  * @param {Boolean} clip Whether or not to copy the color value to the clipboard.
  * @returns {Object | False} Returns an object containing the color values if successful, false otherwise.
  * ```ahk2
- * ; Structure ob returned object:
- * return {
+ * ; Structure of the returned color object:
+ * return { 
  *       RGB: {
  *           R: Format(RGBPartFormatString, "0x" _c.R),
  *           G: Format(RGBPartFormatString, "0x" _c.G),
@@ -33,23 +32,30 @@
 ColorPicker(clip := True)
 {
     ; Configuration variables
-    fontName       := "Maple Mono"
-    fontSize       := 16
-    updateInterval := 16         ; The interval at which the preview will update, in milliseconds. 16ms = ~60 updates / second.
-    textFGColor    := 0x000000   ; 0xBBGGRR Black Text Foreground
-    textBGColor    := 0xFFFFFF   ; 0xBBGGRR White Text Background
-    borderColor    := 0xFFFF0000 ; 0xAABBGGRR Blue Border
-    crosshairColor := 0xFF0000FF ; 0xAABBGGRR Red Crosshair
-    previewXOffset := 10         ; Controls the positioning of the window relative to the cursor (To Upper-Left Window Corner)
-    previewYOffset := 10         ;
-    textPadding    := 6          ; The padding added above and below the preview Hex String, in pixels (half above, half below)
-    captureSize    := 9          ; The size of area you want to capture around the cursor in pixels (N by N square, works best with odd numbers)
-    zoomFactor     := 11         ; Length of preview window sides in pixels = captureSize * zoomFactor. (9 * 11 = 99x99 pixel preview window)
+    fontName        := "Maple Mono" ; Can be any font installed on your system
+    fontSize        := 16           ; Font size for the preview text
+    viewMode        := "grid"      ; Can be "crosshair" or "grid"
+    updateInterval  := 16           ; The interval at which the preview will update, in milliseconds. 16ms = ~60 updates / second.
+    textFGColor     := 0x000000     ; 0xBBGGRR Text Foreground
+    textBGColor     := 0xFFFFFF     ; 0xBBGGRR Text Background
+    borderColor     := 0xFFFFFFFF   ; 0xAABBGGRR Border Color
+    crosshairColor  := 0xFFFFFFFF   ; 0xAABBGGRR Crosshair Color
+    gridColor       := 0xFF000000   ; 0xAABBGGRR Grid Color
+    highlightColor  := 0xFFFFFFFF   ; 0xAABBGGRR Highlight Color for selected grid square
+    highlightCenter := True         ; If True, highlights the pixel that the color is copied from.
+    borderWidth     := 1            ; Thickness of preview border, in pixels.
+    crosshairWidth  := 1            ; Thickness of crosshair lines, in pixels.
+    gridWidth       := 1            ; Thickness of grid lines, in pixels.
+    previewXOffset  := 10           ; Controls the positioning of the window relative to the cursor (To Upper-Left Window Corner)
+    previewYOffset  := 10           ;
+    textPadding     := 6            ; The padding added above and below the preview Hex String, in pixels (half above, half below)
+    captureSize     := 19           ; The size of area you want to capture around the cursor in pixels (N by N square, works best with odd numbers)
+    zoomFactor      := 10           ; Length of preview window sides in pixels = captureSize * zoomFactor. (9 * 11 = 99x99 pixel preview window)
 
-    ; Output format strings
+    ; Output format strings. These control how the values in the return object are formatted. The HexFullFormatString also controls what is displayed in the preview gui.
     RGBFullFormatString := "{1:u}, {2:u}, {3:u}" ; Format(RGBFullFormatString, "0x" r, "0x" g, "0x" b) (Switch to {3:i}, {2:i}, {1:i} for BGR)
     RGBPartFormatString := "{1:u}"               ; Format(RGBPartFormatString, "0x" r)
-    HexFullFormatString := "#{1:s}{2:s}{3:s}"    ; Format(HexFullFormatString, r, g, b) (This will also change what is displayed in the preview gui)
+    HexFullFormatString := "#{1:s}{2:s}{3:s}"    ; Format(HexFullFormatString, r, g, b) (Switch to "#{3:s}{2:s}{1:s}" for BGR)
     HexPartFormatString := "0x{1:s}"             ; Format(HexPartFormatString, r)
 
     BlockLButton(*)
@@ -101,6 +107,7 @@ ColorPicker(clip := True)
         DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hFont)
         DllCall("SetTextColor", "Ptr", hPreviewDC, "UInt", textFGColor)  ; Black text
         DllCall("SetBkColor", "Ptr", hPreviewDC, "UInt", textBGColor)  ; White background
+        DllCall("DeleteObject", "Ptr", hFont)
         size := Buffer(8)
         DllCall("GetTextExtentPoint32", "Ptr", hPreviewDC, "Str", "Ay", "Int", 2, "Ptr", size)
         textHeight := NumGet(size, 4, "Int") + textPadding
@@ -119,6 +126,7 @@ ColorPicker(clip := True)
         NumPut("Int", previewWidth, rect, 8)
         NumPut("Int", totalHeight, rect, 12)
         DllCall("FillRect", "Ptr", hPreviewDC, "Ptr", rect, "Ptr", hBrush)
+        DllCall("DeleteObject", "Ptr", hBrush)
 
         ; Draw text
         textWidth := DllCall("GetTextExtentPoint32", "Ptr", hPreviewDC, "Str", hexColor, "Int", StrLen(hexColor), "Ptr", rect)
@@ -126,16 +134,73 @@ ColorPicker(clip := True)
         textY := previewHeight + (textHeight - fontSize) // 2
         DllCall("TextOut", "Ptr", hPreviewDC, "Int", textX, "Int", textY, "Str", hexColor, "Int", StrLen(hexColor))
 
-        ; Draw crosshair
-        hCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", 1, "UInt", crosshairColor & 0xFFFFFF, "Ptr")
-        DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hCrosshairPen)
-        DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", previewWidth // 2, "Int", 0, "Ptr", 0)
-        DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth // 2, "Int", previewHeight)
-        DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", 0, "Int", previewHeight // 2, "Ptr", 0)
-        DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth, "Int", previewHeight // 2)
+        if (viewMode == "crosshair")
+        {
+            centerX := previewWidth // 2
+            centerY := previewHeight // 2
+            halfZoom := zoomFactor // 2
+
+            ; Draw crosshair
+            hCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", crosshairWidth, "UInt", crosshairColor & 0xFFFFFF, "Ptr")
+            DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hCrosshairPen)
+            DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", previewWidth // 2, "Int", 0, "Ptr", 0)
+            DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth // 2, "Int", previewHeight)
+            DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", 0, "Int", previewHeight // 2, "Ptr", 0)
+            DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth, "Int", previewHeight // 2)
+            DllCall("DeleteObject", "Ptr", hCrosshairPen)
+
+            if highlightCenter
+            {
+                ; Draw smaller inner crosshair
+                hInnerCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", crosshairWidth, "UInt", highlightColor & 0xFFFFFF, "Ptr") ; White color for contrast
+                DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hInnerCrosshairPen)
+                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", centerX, "Int", centerY - halfZoom, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hPreviewDC, "Int", centerX, "Int", centerY + halfZoom)
+                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", centerX - halfZoom, "Int", centerY, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hPreviewDC, "Int", centerX + halfZoom, "Int", centerY)
+                DllCall("DeleteObject", "Ptr", hInnerCrosshairPen)
+            }
+        }
+        else if (viewMode == "grid")
+        {
+            ; Draw grid
+            hGridPen := DllCall("CreatePen", "Int", 0, "Int", gridWidth, "UInt", gridColor & 0xFFFFFF, "Ptr")
+            DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hGridPen)
+
+            ; Calculate the center square
+            if Mod(captureSize, 2) == 0
+                centerIndex := captureSize // 2 + 1
+            else
+                centerIndex := captureSize // 2 + (captureSize & 1)
+
+            Loop captureSize
+            {
+                x := (A_Index - 1) * zoomFactor
+                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", x, "Int", 0, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hPreviewDC, "Int", x, "Int", previewHeight)
+                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", 0, "Int", x, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth, "Int", x)
+            }
+
+            if highlightCenter
+            {
+                ; Highlight the center or lower-right of center square
+                hHighlightPen := DllCall("CreatePen", "Int", 0, "Int", gridWidth, "UInt", highlightColor & 0xFFFFFF, "Ptr") ; Red color
+                DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hHighlightPen)
+                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", (centerIndex - 1) * zoomFactor, "Int", (centerIndex - 1) * zoomFactor, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hPreviewDC, "Int", centerIndex * zoomFactor, "Int", (centerIndex - 1) * zoomFactor)
+                DllCall("LineTo", "Ptr", hPreviewDC, "Int", centerIndex * zoomFactor, "Int", centerIndex * zoomFactor)
+                DllCall("LineTo", "Ptr", hPreviewDC, "Int", (centerIndex - 1) * zoomFactor, "Int", centerIndex * zoomFactor)
+                DllCall("LineTo", "Ptr", hPreviewDC, "Int", (centerIndex - 1) * zoomFactor, "Int", (centerIndex - 1) * zoomFactor)
+                DllCall("DeleteObject", "Ptr", hHighlightPen)
+                DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hGridPen)
+            }
+
+            DllCall("DeleteObject", "Ptr", hGridPen)
+        }
 
         ; Draw border
-        hBorderPen := DllCall("CreatePen", "Int", 0, "Int", 1, "UInt", borderColor & 0xFFFFFF, "Ptr")
+        hBorderPen := DllCall("CreatePen", "Int", 0, "Int", borderWidth, "UInt", borderColor & 0xFFFFFF, "Ptr")
         DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hBorderPen)
         DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", 0, "Int", 0, "Ptr", 0)
         DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth - 1, "Int", 0)
@@ -147,25 +212,13 @@ ColorPicker(clip := True)
         DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hBorderPen)
         DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", 0, "Int", previewHeight, "Ptr", 0)
         DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth, "Int", previewHeight)
+        DllCall("DeleteObject", "Ptr", hBorderPen)
 
         ; Update preview GUI
         hPreviewHWND := WinExist("A")
-        DllCall("UpdateLayeredWindow"
-            , "Ptr", hPreviewHWND
-            , "Ptr", 0
-            , "Ptr", 0
-            , "Int64*", previewWidth | (totalHeight << 32)
-            , "Ptr", hPreviewDC
-            , "Int64*", 0
-            , "UInt", 0
-            , "UInt*", 0xFF << 16
-            , "UInt", 2)
+        DllCall("UpdateLayeredWindow", "Ptr", hPreviewHWND, "Ptr", 0, "Ptr", 0, "Int64*", previewWidth | (totalHeight << 32), "Ptr", hPreviewDC, "Int64*", 0, "UInt", 0, "UInt*", 0xFF << 16, "UInt", 2)
 
         ; Clean up
-        DllCall("DeleteObject", "Ptr", hFont)
-        DllCall("DeleteObject", "Ptr", hBrush)
-        DllCall("DeleteObject", "Ptr", hBorderPen)
-        DllCall("DeleteObject", "Ptr", hCrosshairPen)
         DllCall("DeleteDC", "Ptr", hPreviewDC)
         DllCall("DeleteObject", "Ptr", hPreviewBitmap)
         DllCall("DeleteDC", "Ptr", hMemDC)
@@ -179,7 +232,7 @@ ColorPicker(clip := True)
     Hotkey("*LButton", BlockLButton, "On S")
 
     hexColor := "", outType := "", _c := { R: 0, G: 0, B: 0 }
-    previewGui := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x80000")
+    previewGui := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x80000 -DPIScale")
 
     ; Set the cursor to crosshair
     hCross := DllCall("LoadCursor", "Ptr", 0, "Ptr", 32515)
@@ -187,6 +240,7 @@ ColorPicker(clip := True)
         DllCall("SetSystemCursor", "Ptr", DllCall("CopyImage", "Ptr", hCross, "UInt", 2, "Int", 0, "Int", 0, "UInt", 0), "UInt", cursorId)
 
     SetTimer(CaptureAndPreview, updateInterval)
+
     ; Main loop
     while (True)
     {
@@ -225,7 +279,7 @@ ColorPicker(clip := True)
             Full: Format(HexFullFormatString, _c.R, _c.G, _c.B)
         }
     }
-
+    
     if (clip == True) and ((outType == "HEX") or (outType == "RGB"))
         A_Clipboard := (outType == "HEX" ? _color.Hex.Full : _color.RGB.Full)
 
@@ -236,32 +290,6 @@ ColorPicker(clip := True)
     Hotkey("*LButton", "Off")
     Suspend(False)
     previewGui.Destroy()
-
+    
     return (outType == "Exit" ? False : _color)
-}
-
-#c::
-{
-    _color := ColorPicker()
-
-    if _color
-    {
-        ; RGB
-        rgb_r    := _color.RGB.R
-        rgb_g    := _color.RGB.G
-        rgb_b    := _color.RGB.B
-        rgb_full := _color.RGB.Full
-
-        ; HEX
-        hex_r    := _color.Hex.R
-        hex_g    := _color.Hex.G
-        hex_b    := _color.Hex.B
-        hex_full := _color.Hex.Full
-
-        MsgBox("RGB: " rgb_full "`nR: " rgb_r "`nG: " rgb_g "`nB: " rgb_b "`n`nHex: " hex_full "`nR: " hex_r "`nG: " hex_g "`nB: " hex_b "`n`nClipboard: " A_Clipboard, "Selected Color Information")
-    }
-    else
-    {
-        MsgBox("ColorPicker function Exited by user.")
-    }
 }
