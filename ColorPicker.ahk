@@ -30,6 +30,7 @@
  *    }
  * ```
  */
+;#c::MsgBox(ColorPicker() is Object ? "Color Picked" : "Cancelled")
 ColorPicker(clip := True)
 {
     ; Configuration variables
@@ -47,6 +48,7 @@ ColorPicker(clip := True)
     borderWidth     := 1            ; Thickness of preview border, in pixels.
     crosshairWidth  := 1            ; Thickness of crosshair lines, in pixels.
     gridWidth       := 1            ; Thickness of grid lines, in pixels.
+    centerDotRadius := 2            ; Radius of the Center Dot when not in "grid" or "crosshair" mode, in pixels.
     previewXOffset  := 10           ; Controls the positioning of the window relative to the cursor (To Upper-Left Window Corner)
     previewYOffset  := 10           ;
     textPadding     := 6            ; The padding added above and below the preview Hex String, in pixels (half above, half below)
@@ -60,11 +62,11 @@ ColorPicker(clip := True)
     HexFullFormatString := "#{1:s}{2:s}{3:s}"    ; Format(HexFullFormatString, r, g, b) (Switch to "#{3:s}{2:s}{1:s}" for BGR)
     HexPartFormatString := "0x{1:s}"             ; Format(HexPartFormatString, r)
 
-    GetDpiScale()
+    try dpi := DllCall("SetThreadDpiAwarenessContext", "ptr", -3, "ptr")
+
+    GetDpiScale(guiHwnd)
     {
-        hDC := DllCall("GetDC", "Ptr", 0, "Ptr")
-        dpi := DllCall("GetDeviceCaps", "Ptr", hDC, "Int", 88, "Int")
-        DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
+        dpi := DllCall("User32.dll\GetDpiForWindow", "Ptr", guiHwnd, "UInt")
         return dpi / 96
     }
 
@@ -80,6 +82,7 @@ ColorPicker(clip := True)
         CoordMode "Mouse", "Screen"
         CoordMode "Pixel", "Screen"
         MouseGetPos(&cursorX, &cursorY)
+        dpiScale := GetDpiScale(previewGui.Hwnd)
         previewGui.Show()
 
         ; Calculate capture region
@@ -105,105 +108,111 @@ ColorPicker(clip := True)
         hexColor := Format(HexFullFormatString, _c.R, _c.G, _c.B)
 
         ; Calculate preview size
-        previewWidth := Round(width * zoomFactor * dpiScale)
-        previewHeight := Round(height * zoomFactor * dpiScale)
-        hPreviewDC := DllCall("CreateCompatibleDC", "Ptr", hDC, "Ptr")
+        scaledZoomFactor := Round(zoomFactor * dpiScale)
+        previewWidth := captureSize * scaledZoomFactor
+        previewHeight := captureSize * scaledZoomFactor
 
-        ; Prepare to draw text, this has to be done first to calculate it's height
+        ; Prepare to draw text
+        scaledFontSize := Round(fontSize * dpiScale)
         LOGFONT := Buffer(92, 0)
-        NumPut("Int", fontSize, LOGFONT, 0)
+        NumPut("Int", scaledFontSize * 4, LOGFONT, 0)
         StrPut(fontName, LOGFONT.Ptr + 28, 32, "UTF-16")
         hFont := DllCall("CreateFontIndirect", "Ptr", LOGFONT, "Ptr")
-        DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hFont)
-        DllCall("SetTextColor", "Ptr", hPreviewDC, "UInt", textFGColor)  ; Black text
-        DllCall("SetBkColor", "Ptr", hPreviewDC, "UInt", textBGColor)  ; White background
-        DllCall("DeleteObject", "Ptr", hFont)
-        size := Buffer(8)
-        DllCall("GetTextExtentPoint32", "Ptr", hPreviewDC, "Str", "Ay", "Int", 2, "Ptr", size)
-        textHeight := NumGet(size, 4, "Int") + textPadding
 
-        ; Conclude size calculations, create preview.
-        totalHeight := Round((previewHeight + textHeight) * dpiScale)
-        hPreviewBitmap := DllCall("CreateCompatibleBitmap", "Ptr", hDC, "Int", previewWidth, "Int", totalHeight, "Ptr")
-        DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hPreviewBitmap)
-        DllCall("StretchBlt", "Ptr", hPreviewDC, "Int", 0, "Int", 0, "Int", previewWidth, "Int", previewHeight, "Ptr", hMemDC, "Int", 0, "Int", 0, "Int", width, "Int", height, "UInt", 0x00CC0020)
+        size := Buffer(8)
+        DllCall("GetTextExtentPoint32", "Ptr", hDC, "Str", "Ay", "Int", 2, "Ptr", size)
+        textHeight := Round((NumGet(size, 4, "Int") + textPadding) * dpiScale)
+
+        ; Conclude size calculations
+        totalHeight := (previewHeight + textHeight)
+
+        ; Create high-resolution memory DC
+        hHighResDC := DllCall("CreateCompatibleDC", "Ptr", hDC, "Ptr")
+        hHighResBitmap := DllCall("CreateCompatibleBitmap", "Ptr", hDC, "Int", previewWidth * 4, "Int", totalHeight * 4, "Ptr")
+        DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hHighResBitmap)
+        DllCall("SetStretchBltMode", "Ptr", hHighResDC, "Int", 4)
+        DllCall("StretchBlt", "Ptr", hHighResDC, "Int", 0, "Int", 0, "Int", previewWidth * 4, "Int", previewHeight * 4, "Ptr", hMemDC, "Int", 0, "Int", 0, "Int", width, "Int", height, "UInt", 0x00CC0020)
 
         ; Draw background rectangle
         hBrush := DllCall("CreateSolidBrush", "UInt", textBGColor, "Ptr")
         rect := Buffer(16, 0)
         NumPut("Int", 0, rect, 0)
-        NumPut("Int", previewHeight, rect, 4)
-        NumPut("Int", previewWidth, rect, 8)
-        NumPut("Int", totalHeight, rect, 12)
-        DllCall("FillRect", "Ptr", hPreviewDC, "Ptr", rect, "Ptr", hBrush)
+        NumPut("Int", (previewHeight + borderWidth) * 4, rect, 4)
+        NumPut("Int", (previewWidth + borderWidth) * 4, rect, 8)
+        NumPut("Int", totalHeight * 4, rect, 12)
+        DllCall("FillRect", "Ptr", hHighResDC, "Ptr", rect, "Ptr", hBrush)
         DllCall("DeleteObject", "Ptr", hBrush)
 
-        ; Draw text
-        textWidth := DllCall("GetTextExtentPoint32", "Ptr", hPreviewDC, "Str", hexColor, "Int", StrLen(hexColor), "Ptr", rect)
-        textX := (previewWidth - NumGet(rect, 0, "Int")) // 2
-        textY := previewHeight + (textHeight - fontSize) // 2
-        DllCall("TextOut", "Ptr", hPreviewDC, "Int", textX, "Int", textY, "Str", hexColor, "Int", StrLen(hexColor))
+        ; Render text at high resolution
+        DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hFont)
+        DllCall("SetTextColor", "Ptr", hHighResDC, "UInt", textFGColor)
+        DllCall("SetBkColor", "Ptr", hHighResDC, "UInt", textBGColor)
+        textWidth := DllCall("GetTextExtentPoint32", "Ptr", hHighResDC, "Str", hexColor, "Int", StrLen(hexColor), "Ptr", rect)
+        textX := (previewWidth * 4 - NumGet(rect, 0, "Int")) // 2
+        textY := previewHeight * 4 + (textHeight * 4 - scaledFontSize * 4) // 2
+        DllCall("TextOut", "Ptr", hHighResDC, "Int", textX, "Int", textY, "Str", hexColor, "Int", StrLen(hexColor))
 
         ; Calculate the offset based on captureSize
-        offset := (Mod(captureSize, 2) == 0) ? Round(zoomFactor / 2 * dpiScale) : 0
+        offset := (Mod(captureSize, 2) == 0) ? Round(zoomFactor * 2) : 0
 
         if (viewMode == "crosshair")
         {
-            centerX := Round(previewWidth / 2) + offset
-            centerY := Round(previewHeight / 2) + offset
-            halfZoom := Round(zoomFactor / 2 * dpiScale)
+            centerX := Round(previewWidth * 2) + offset
+            centerY := Round(previewHeight * 2) + offset
+            halfZoom := Round(zoomFactor * 2)
 
-            hCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", Round(crosshairWidth * dpiScale), "UInt", crosshairColor & 0xFFFFFF, "Ptr")
-            DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hCrosshairPen)
-            DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", centerX, "Int", 0, "Ptr", 0)
-            DllCall("LineTo", "Ptr", hPreviewDC, "Int", centerX, "Int", previewHeight)
-            DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", 0, "Int", centerY, "Ptr", 0)
-            DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth, "Int", centerY)
+            hCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", Round(crosshairWidth * dpiScale) * 4, "UInt", crosshairColor & 0xFFFFFF, "Ptr")
+            DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hCrosshairPen)
+            DllCall("MoveToEx", "Ptr", hHighResDC, "Int", centerX, "Int", 0, "Ptr", 0)
+            DllCall("LineTo", "Ptr", hHighResDC, "Int", centerX, "Int", previewHeight * 4)
+            DllCall("MoveToEx", "Ptr", hHighResDC, "Int", 0, "Int", centerY, "Ptr", 0)
+            DllCall("LineTo", "Ptr", hHighResDC, "Int", previewWidth * 4, "Int", centerY)
 
             if highlightCenter
             {
-                hInnerCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", Round(crosshairWidth * dpiScale), "UInt", highlightColor & 0xFFFFFF, "Ptr")
-                DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hInnerCrosshairPen)
-                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", centerX, "Int", centerY - halfZoom, "Ptr", 0)
-                DllCall("LineTo", "Ptr", hPreviewDC, "Int", centerX, "Int", centerY + halfZoom)
-                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", centerX - halfZoom, "Int", centerY, "Ptr", 0)
-                DllCall("LineTo", "Ptr", hPreviewDC, "Int", centerX + halfZoom, "Int", centerY)
+                hInnerCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", Round(crosshairWidth * dpiScale) * 4, "UInt", highlightColor & 0xFFFFFF, "Ptr")
+                DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hInnerCrosshairPen)
+                DllCall("MoveToEx", "Ptr", hHighResDC, "Int", centerX, "Int", centerY - halfZoom, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hHighResDC, "Int", centerX, "Int", centerY + halfZoom)
+                DllCall("MoveToEx", "Ptr", hHighResDC, "Int", centerX - halfZoom, "Int", centerY, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hHighResDC, "Int", centerX + halfZoom, "Int", centerY)
                 DllCall("DeleteObject", "Ptr", hInnerCrosshairPen)
             }
+            DllCall("DeleteObject", "Ptr", hCrosshairPen)
         }
         else if (viewMode == "grid")
         {
-            ; Draw grid
-            hGridPen := DllCall("CreatePen", "Int", 0, "Int", gridWidth, "UInt", gridColor & 0xFFFFFF, "Ptr")
-            DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hGridPen)
-
             ; Calculate the center square
             if Mod(captureSize, 2) == 0
                 centerIndex := captureSize // 2 + 1
             else
                 centerIndex := captureSize // 2 + (captureSize & 1)
 
-            Loop captureSize
+            ; Draw grid
+            hGridPen := DllCall("CreatePen", "Int", 0, "Int", Round(gridWidth * dpiScale) * 4, "UInt", gridColor & 0xFFFFFF, "Ptr")
+            DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hGridPen)
+
+            Loop captureSize + 1
             {
-                x := (A_Index - 1) * zoomFactor
-                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", x, "Int", 0, "Ptr", 0)
-                DllCall("LineTo", "Ptr", hPreviewDC, "Int", x, "Int", previewHeight)
-                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", 0, "Int", x, "Ptr", 0)
-                DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth, "Int", x)
+                x := (A_Index - 1) * scaledZoomFactor * 4
+                DllCall("MoveToEx", "Ptr", hHighResDC, "Int", x, "Int", 0, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hHighResDC, "Int", x, "Int", previewHeight * 4)
+                DllCall("MoveToEx", "Ptr", hHighResDC, "Int", 0, "Int", x, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hHighResDC, "Int", previewWidth * 4, "Int", x)
             }
+
 
             if highlightCenter
             {
                 ; Highlight the center or lower-right of center square
-                hHighlightPen := DllCall("CreatePen", "Int", 0, "Int", gridWidth, "UInt", highlightColor & 0xFFFFFF, "Ptr") ; Red color
-                DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hHighlightPen)
-                DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", (centerIndex - 1) * zoomFactor, "Int", (centerIndex - 1) * zoomFactor, "Ptr", 0)
-                DllCall("LineTo", "Ptr", hPreviewDC, "Int", centerIndex * zoomFactor, "Int", (centerIndex - 1) * zoomFactor)
-                DllCall("LineTo", "Ptr", hPreviewDC, "Int", centerIndex * zoomFactor, "Int", centerIndex * zoomFactor)
-                DllCall("LineTo", "Ptr", hPreviewDC, "Int", (centerIndex - 1) * zoomFactor, "Int", centerIndex * zoomFactor)
-                DllCall("LineTo", "Ptr", hPreviewDC, "Int", (centerIndex - 1) * zoomFactor, "Int", (centerIndex - 1) * zoomFactor)
+                hHighlightPen := DllCall("CreatePen", "Int", 0, "Int", Round(gridWidth * dpiScale) * 4, "UInt", highlightColor & 0xFFFFFF, "Ptr")
+                DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hHighlightPen)
+                DllCall("MoveToEx", "Ptr", hHighResDC, "Int", (centerIndex - 1) * scaledZoomFactor * 4, "Int", (centerIndex - 1) * scaledZoomFactor * 4, "Ptr", 0)
+                DllCall("LineTo", "Ptr", hHighResDC, "Int", centerIndex * scaledZoomFactor * 4, "Int", (centerIndex - 1) * scaledZoomFactor * 4)
+                DllCall("LineTo", "Ptr", hHighResDC, "Int", centerIndex * scaledZoomFactor * 4, "Int", centerIndex * scaledZoomFactor * 4)
+                DllCall("LineTo", "Ptr", hHighResDC, "Int", (centerIndex - 1) * scaledZoomFactor * 4, "Int", centerIndex * scaledZoomFactor * 4)
+                DllCall("LineTo", "Ptr", hHighResDC, "Int", (centerIndex - 1) * scaledZoomFactor * 4, "Int", (centerIndex - 1) * scaledZoomFactor * 4)
                 DllCall("DeleteObject", "Ptr", hHighlightPen)
-                DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hGridPen)
             }
 
             DllCall("DeleteObject", "Ptr", hGridPen)
@@ -211,39 +220,49 @@ ColorPicker(clip := True)
         else if highlightCenter
         {
             ; Draw a dot in the center
-            centerX := Round(previewWidth / 2) + offset
-            centerY := Round(previewHeight / 2) + offset
-            dotSize := Round(2 * dpiScale)
+            centerX := Round(previewWidth * 2) + offset
+            centerY := Round(previewHeight * 2) + offset
+            dotSize := Round(4 * dpiScale) * centerDotRadius
 
             hDotBrush := DllCall("CreateSolidBrush", "UInt", highlightColor & 0xFFFFFF, "Ptr")
-            DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hDotBrush)
-            DllCall("Ellipse", "Ptr", hPreviewDC, "Int", centerX - dotSize, "Int", centerY - dotSize, "Int", centerX + dotSize, "Int", centerY + dotSize)
+            DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hDotBrush)
+            DllCall("Ellipse", "Ptr", hHighResDC, "Int", centerX - Round(dotSize * dpiScale), "Int", centerY - Round(dotSize * dpiScale), "Int", centerX + Round(dotSize * dpiScale), "Int", centerY + Round(dotSize * dpiScale))
             DllCall("DeleteObject", "Ptr", hDotBrush)
         }
 
+        drawWidth := previewWidth - (borderWidth * 2)
+        drawHeight := totalHeight - (borderWidth * 2)
+
+        ; Create preview DC and scale down from high-res DC
+        hPreviewDC := DllCall("CreateCompatibleDC", "Ptr", hDC, "Ptr")
+        hPreviewBitmap := DllCall("CreateCompatibleBitmap", "Ptr", hDC, "Int", previewWidth, "Int", totalHeight, "Ptr")
+        DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hPreviewBitmap)
+        DllCall("SetStretchBltMode", "Ptr", hPreviewDC, "Int", 4)
+        DllCall("StretchBlt", "Ptr", hPreviewDC, "Int", borderWidth, "Int", borderWidth, "Int", drawWidth, "Int", drawHeight, "Ptr", hHighResDC, "Int", 0, "Int", 0, "Int", previewWidth * 4, "Int", totalHeight * 4, "UInt", 0x00CC0020)
+
         ; Draw border
-        hBorderPen := DllCall("CreatePen", "Int", 0, "Int", borderWidth, "UInt", borderColor & 0xFFFFFF, "Ptr")
-        DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hBorderPen)
-        DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", 0, "Int", 0, "Ptr", 0)
-        DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth - 1, "Int", 0)
-        DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth - 1, "Int", totalHeight - 1)
-        DllCall("LineTo", "Ptr", hPreviewDC, "Int", 0, "Int", totalHeight - 1)
-        DllCall("LineTo", "Ptr", hPreviewDC, "Int", 0, "Int", 0)
+        hBorderPen := DllCall("CreatePen", "Int", 0, "Int", borderWidth * 4, "UInt", borderColor & 0xFFFFFF, "Ptr")
+        DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hBorderPen)
+        DllCall("MoveToEx", "Ptr", hHighResDC, "Int", 0, "Int", 0, "Ptr", 0)
+        DllCall("LineTo", "Ptr", hHighResDC, "Int", previewWidth * 4 + 1, "Int", 0)
+        DllCall("LineTo", "Ptr", hHighResDC, "Int", previewWidth * 4 + 1, "Int", totalHeight * 4 + 1)
+        DllCall("LineTo", "Ptr", hHighResDC, "Int", 0, "Int", totalHeight * 4)
+        DllCall("LineTo", "Ptr", hHighResDC, "Int", 0, "Int", 0)
 
         ; Draw separator line
-        DllCall("SelectObject", "Ptr", hPreviewDC, "Ptr", hBorderPen)
-        DllCall("MoveToEx", "Ptr", hPreviewDC, "Int", 0, "Int", previewHeight, "Ptr", 0)
-        DllCall("LineTo", "Ptr", hPreviewDC, "Int", previewWidth, "Int", previewHeight)
+        DllCall("MoveToEx", "Ptr", hHighResDC, "Int", 0, "Int", previewHeight * 4, "Ptr", 0)
+        DllCall("LineTo", "Ptr", hHighResDC, "Int", previewWidth * 4, "Int", previewHeight * 4)
         DllCall("DeleteObject", "Ptr", hBorderPen)
 
         ; Update preview GUI
         hPreviewHWND := WinExist("A")
         DllCall("UpdateLayeredWindow", "Ptr", hPreviewHWND, "Ptr", 0, "Ptr", 0, "Int64*", previewWidth | (totalHeight << 32), "Ptr", hPreviewDC, "Int64*", 0, "UInt", 0, "UInt*", 0xFF << 16, "UInt", 2)
-        ;DllCall("UpdateLayeredWindow", "Ptr", hPreviewHWND, "Ptr", 0, "Ptr", 0, "Int64*", previewWidth | (totalHeight << 32), "Ptr", hPreviewDC, "Int64*", 0, "UInt", 0, "UInt*", 0xFF << 16, "UInt", 2)
 
         ; Clean up
         DllCall("DeleteDC", "Ptr", hPreviewDC)
         DllCall("DeleteObject", "Ptr", hPreviewBitmap)
+        DllCall("DeleteDC", "Ptr", hHighResDC)
+        DllCall("DeleteObject", "Ptr", hHighResBitmap)
         DllCall("DeleteDC", "Ptr", hMemDC)
         DllCall("DeleteObject", "Ptr", hBitmap)
         DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
@@ -253,10 +272,9 @@ ColorPicker(clip := True)
     CoordMode "Pixel", "Screen"
     Suspend(True)
     Hotkey("*LButton", BlockLButton, "On S")
-
+    
     hexColor := "", outType := "", anchoredX := 0, anchoredY := 0, _c := { R: 0, G: 0, B: 0 }
     previewGui := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x80000 -DPIScale")
-    dpiScale := GetDpiScale()
 
     SetTimer(CaptureAndPreview, updateInterval)
 
@@ -280,7 +298,6 @@ ColorPicker(clip := True)
                 outType := "RGB"
             else
                 outType := "HEX"
-
             break
         }
 
@@ -298,27 +315,22 @@ ColorPicker(clip := True)
                 anchoredX := mouseX + previewXOffset
                 anchoredy := mouseY + previewYOffset
             }
-
             KeyWait("a")
         }
 
         if GetKeyState("m", "P")
         {
             viewModes := [ "grid", "crosshair", "none" ]
-
             index := 0
             for mode in viewModes
                 if (mode == viewMode)
                     index := A_Index
-
             if index == 0
             {
                 viewMode := "none"
                 index := 3
             }
-
             viewMode := viewModes[Mod(index, viewModes.Length) + 1]
-
             KeyWait("m")
         }
 
@@ -379,7 +391,9 @@ ColorPicker(clip := True)
     Sleep(50)
     Hotkey("*LButton", "Off")
     Suspend(False)
+
     previewGui.Destroy()
+    try DllCall("SetThreadDpiAwarenessContext", "ptr", dpi, "ptr")
 
     return (outType == "Exit" ? False : _color)
 }
