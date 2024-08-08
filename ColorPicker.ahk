@@ -347,7 +347,7 @@ ColorPicker(clip := True)
         }
 
         ; "LButton", "Enter", or "NumpadEnter" Captures HEX, Shift in combination with them captures RGB
-        if GetKeyState("LButton", "P") or GetKeyState("Enter", "P") or GetKeyState("NumpadEnter", "P")
+        if GetKeyState("LButton", "P") or GetKeyState("Enter", "P") or GetKeyState("NumpadEnter", "P") or GetKeyState("Space", "P")
         {
             if GetKeyState("Shift", "P")
                 outType := "RGB"
