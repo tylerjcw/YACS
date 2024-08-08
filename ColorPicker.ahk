@@ -40,8 +40,8 @@ ColorPicker(clip := True)
     updateInterval  := 16           ; The interval at which the preview will update, in milliseconds. 16ms = ~60 updates / second.
     textFGColor     := 0x000000     ; 0xBBGGRR Text Foreground
     textBGColor     := 0xFFFFFF     ; 0xBBGGRR Text Background
-    borderColor     := 0xFFFFFFFF   ; 0xAABBGGRR Border Color
-    crosshairColor  := 0xFFFFFFFF   ; 0xAABBGGRR Crosshair Color
+    borderColor     := 0xFF000000   ; 0xAABBGGRR Border Color
+    crosshairColor  := 0xFF000000   ; 0xAABBGGRR Crosshair Color
     gridColor       := 0xFF000000   ; 0xAABBGGRR Grid Color
     highlightColor  := 0xFFFFFFFF   ; 0xAABBGGRR Highlight Color for selected grid square
     highlightCenter := True         ; If True, highlights the pixel that the color is copied from.
