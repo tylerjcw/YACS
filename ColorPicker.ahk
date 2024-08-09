@@ -30,12 +30,10 @@
  *    }
  * ```
  */
-; Uncomment the line below to test
-;#c::MsgBox(ColorPicker() is Object ? "A color was picked" : "Cancelled")
-ColorPicker(clip := True)
+ColorPicker(clip := True, targetHwnd := 0, callback := 0)
 {
     ; Configuration variables
-    fontName           := "Consolas"   ; Can be any font installed on your system
+    fontName           := "Maple Mono"   ; Can be any font installed on your system
     fontSize           := 16           ; Font size for the preview text
     viewMode           := "grid"       ; Can be "crosshair", "grid", any other value will result in no overlay
     updateInterval     := 16           ; The interval at which the preview will update, in milliseconds. 16ms = ~60 updates / second.
@@ -47,7 +45,7 @@ ColorPicker(clip := True)
     textPadding        := 6            ; The padding added above and below the preview Hex String, in pixels (half above, half below)
     defaultCaptureSize := 19           ; The size of area you want to capture around the cursor in pixels (N by N square, works best with odd numbers)
     defaultZoomFactor  := 10           ; Length of preview window sides in pixels = captureSize * zoomFactor. (9 * 11 = 99x99 pixel preview window)
-    
+    largeJumpAmount    := 16           ; How many pixels to move the preview window by when holding shift and moving it
 
     ; Color Configuration. Press "i" to cycle between the two color sets.
     ;=====================  SET 1  ===  SET 2  ==========================;
@@ -62,7 +60,7 @@ ColorPicker(clip := True)
     RGBFullFormatString := "{1:u}, {2:u}, {3:u}" ; Format(RGBFullFormatString, "0x" r, "0x" g, "0x" b) (Switch to {3:i}, {2:i}, {1:i} for BGR)
     RGBPartFormatString := "{1:u}"               ; Format(RGBPartFormatString, "0x" r)
     HexFullFormatString := "#{1:s}{2:s}{3:s}"    ; Format(HexFullFormatString, r, g, b) (Switch to "#{3:s}{2:s}{1:s}" for BGR)
-    HexPartFormatString := "0x{1:s}"             ; Format(HexPartFormatString, r)
+    HexPartFormatString := "{1:s}"             ; Format(HexPartFormatString, r)
 
     try dpiContext := DllCall("SetThreadDpiAwarenessContext", "ptr", -3, "ptr")
 
@@ -90,10 +88,10 @@ ColorPicker(clip := True)
 
             ; Calculate capture region
             halfSize := (captureSize - 1) // 2
-            left := cursorX - halfSize
-            top := cursorY - halfSize
-            width := captureSize
-            height := captureSize
+            left     := cursorX - halfSize
+            top      := cursorY - halfSize
+            width    := captureSize
+            height   := captureSize
 
             ; Capture screen region
             hDC := DllCall("GetDC", "Ptr", 0, "Ptr")
@@ -103,12 +101,27 @@ ColorPicker(clip := True)
             DllCall("BitBlt", "Ptr", hMemDC, "Int", 0, "Int", 0, "Int", width, "Int", height, "Ptr", hDC, "Int", left, "Int", top, "UInt", 0x00CC0020)
 
             ; Get color of central pixel
-            centralX := width // 2
-            centralY := height // 2
+            centralX     := width // 2
+            centralY     := height // 2
             centralColor := DllCall("GetPixel", "Ptr", hMemDC, "Int", centralX, "Int", centralY, "UInt")
-            hexColor := Format("#{:06X}", centralColor & 0xFFFFFF)
-            _c := { B: SubStr(hexColor, 2, 2), G: SubStr(hexColor, 4, 2), R: SubStr(hexColor, 6, 2) }
-            hexColor := Format(HexFullFormatString, _c.R, _c.G, _c.B)
+            hexColor     := Format("#{:06X}", centralColor & 0xFFFFFF)
+
+            _tempCol := { B: SubStr(hexColor, 2, 2), G: SubStr(hexColor, 4, 2), R: SubStr(hexColor, 6, 2) }
+            hexColor := Format(HexFullFormatString, _tempCol.R, _tempCol.G, _tempCol.B)
+            _color := {
+                RGB: {
+                    R: Format(RGBPartFormatString, "0x" _tempCol.R),
+                    G: Format(RGBPartFormatString, "0x" _tempCol.G),
+                    B: Format(RGBPartFormatString, "0x" _tempCol.B),
+                    Full: Format(RGBFullFormatString, "0x" _tempCol.R, "0x" _tempCol.G, "0x" _tempCol.B)
+                },
+                Hex: {
+                    R: Format(HexPartFormatString, _tempCol.R),
+                    G: Format(HexPartFormatString, _tempCol.G),
+                    B: Format(HexPartFormatString, _tempCol.B),
+                    Full: Format(HexFullFormatString, _tempCol.R, _tempCol.G, _tempCol.B)
+                }
+            }
 
             ; Calculate preview size
             scaledZoomFactor := Round(zoomFactor * dpiScale)
@@ -251,7 +264,7 @@ ColorPicker(clip := True)
             ; Update preview GUI
             hPreviewHWND := WinExist("A")
             DllCall("UpdateLayeredWindow", "Ptr", hPreviewHWND, "Ptr", 0, "Ptr", 0, "Int64*", previewWidth | (totalHeight << 32), "Ptr", hPreviewDC, "Int64*", 0, "UInt", 0, "UInt*", 0xFF << 16, "UInt", 2)
-            
+
             ; Clean up
             DllCall("DeleteObject", "Ptr", hFont)
             DllCall("DeleteDC", "Ptr", hPreviewDC)
@@ -261,6 +274,9 @@ ColorPicker(clip := True)
             DllCall("DeleteDC", "Ptr", hMemDC)
             DllCall("DeleteObject", "Ptr", hBitmap)
             DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
+
+            if (callback != 0) and (callback is Func)
+                callback.Call(_color)
         }
     }
 
@@ -270,9 +286,9 @@ ColorPicker(clip := True)
     Hotkey("*LButton", BlockLButton, "On S")
 
     anchored := False, frozen := False, hexColor := "", outType := "", anchoredX := 0, anchoredY := 0, colorSet := 0, textHeight := 0
-    _c := { R: 0, G: 0, B: 0 }
-    zoomFactor := defaultZoomFactor
-    captureSize := defaultCaptureSize
+    _color := {}
+    zoomFactor     := defaultZoomFactor
+    captureSize    := defaultCaptureSize
     previewXOffset := Round(captureSize / 2) + borderWidth + 1
     previewYOffset := Round(captureSize / 2) + borderWidth + 1
 
@@ -293,17 +309,37 @@ ColorPicker(clip := True)
     for cursorId in [32512, 32513, 32514, 32515, 32516, 32631, 32640, 32641, 32642, 32643, 32644, 32645, 32646, 32648, 32649, 32650, 32651]
         DllCall("SetSystemCursor", "Ptr", DllCall("CopyImage", "Ptr", hCross, "UInt", 2, "Int", 0, "Int", 0, "UInt", 0), "UInt", cursorId)
 
+    ; If a Valid HWND was passed as an argument, confine the cursor to that window
+    if (targetHwnd != 0) and WinExist("ahk_id " targetHwnd)
+    {
+        windowRect := Buffer(16)
+        DllCall("GetWindowRect", "Ptr", targetHwnd, "Ptr", windowRect)
+        confineLeft   := NumGet(windowRect, 0, "Int")
+        confineTop    := NumGet(windowRect, 4, "Int")
+        confineRight  := NumGet(windowRect, 8, "Int")
+        confineBottom := NumGet(windowRect, 12, "Int")
+
+        DllCall("ClipCursor", "Ptr", windowRect)
+    }
+
     ; Main loop
     while (True)
     {
         MouseGetPos(&mouseX, &mouseY)
+
+        if (targetHwnd != 0) and WinExist("ahk_id " targetHwnd)
+        {
+            mouseX := Max(confineLeft, Min(mouseX, confineRight))
+            mouseY := Max(confineTop, Min(mouseY, confineBottom))
+        }
+
         if anchored
         {
             previewGui.Move(anchoredX, anchoredY)
         }
         else
         {
-            previewWidth := captureSize * zoomFactor + borderWidth * 2
+            previewWidth  := captureSize * zoomFactor + borderWidth * 2
             previewHeight := captureSize * zoomFactor + borderWidth * 2 + textHeight
 
             newX := mouseX + previewXOffset
@@ -409,7 +445,10 @@ ColorPicker(clip := True)
         ; "Left" or "Numpad4" moves cursor left one pixel
         if GetKeyState("Left", "P") or GetKeyState("Numpad4", "P")
         {
-            MouseMove(-1, 0, 0, "R")
+            if GetKeyState("Shift", "P")
+                MouseMove(-largeJumpAmount, 0, 0, "R")
+            else
+                MouseMove(-1, 0, 0, "R")
 
             if !KeyWait("Left", "T0.05") or !KeyWait("Numpad4", "T0.05")
                 continue
@@ -418,7 +457,10 @@ ColorPicker(clip := True)
         ; "Right" or "Numpad6" moves cursor right one pixel
         if GetKeyState("Right", "P") or GetKeyState("Numpad6", "P")
         {
-            MouseMove(1, 0, 0, "R")
+            if GetKeyState("Shift", "P")
+                MouseMove(largeJumpAmount, 0, 0, "R")
+            else
+                MouseMove(1, 0, 0, "R")
 
             if !KeyWait("Right", "T0.05") or !KeyWait("Numpad6", "T0.05")
                 continue
@@ -427,7 +469,10 @@ ColorPicker(clip := True)
         ; "Up" or "Numpad8" moves cursor up one pixel
         if GetKeyState("Up", "P") or GetKeyState("Numpad8", "P")
         {
-            MouseMove(0, -1, 0, "R")
+            if GetKeyState("Shift", "P")
+                MouseMove(0, -largeJumpAmount, 0, "R")
+            else
+                MouseMove(0, -1, 0, "R")
 
             if !KeyWait("Up", "T0.05") or !KeyWait("Numpad8", "T0.05")
                 continue
@@ -436,7 +481,10 @@ ColorPicker(clip := True)
         ; "Down" or "Numpad2" moves cursor down one pixel
         if GetKeyState("Down", "P") or GetKeyState("Numpad2", "P")
         {
-            MouseMove(0, 1, 0, "R")
+            if GetKeyState("Shift", "P")
+                MouseMove(0, largeJumpAmount, 0, "R")
+            else
+                MouseMove(0, 1, 0, "R")
 
             if !KeyWait("Down", "T0.05") or !KeyWait("Numpad2", "T0.05")
                 continue
@@ -490,6 +538,7 @@ ColorPicker(clip := True)
                 continue
         }
 
+        ; "0" or "Numpad0" resets zoom and capture size
         if GetKeyState("0", "P") or GetKeyState("Numpad0", "P")
         {
             zoomFactor := defaultZoomFactor
@@ -502,6 +551,7 @@ ColorPicker(clip := True)
                 continue
         }
 
+        ; "F" or "Numpad5" toggles freezing the preview update cycle
         if GetKeyState("f", "P") or GetKeyState("Numpad5", "P")
         {
             frozen := !frozen
@@ -511,21 +561,6 @@ ColorPicker(clip := True)
         }
 
         Sleep(10)
-    }
-
-    _color := {
-        RGB: {
-            R: Format(RGBPartFormatString, "0x" _c.R),
-            G: Format(RGBPartFormatString, "0x" _c.G),
-            B: Format(RGBPartFormatString, "0x" _c.B),
-            Full: Format(RGBFullFormatString, "0x" _c.R, "0x" _c.G, "0x" _c.B)
-        },
-        Hex: {
-            R: Format(HexPartFormatString, _c.R),
-            G: Format(HexPartFormatString, _c.G),
-            B: Format(HexPartFormatString, _c.B),
-            Full: Format(HexFullFormatString, _c.R, _c.G, _c.B)
-        }
     }
 
     if (clip == True) and ((outType == "HEX") or (outType == "RGB"))
@@ -542,31 +577,66 @@ ColorPicker(clip := True)
     previewGui.Destroy()
     try DllCall("SetThreadDpiAwarenessContext", "ptr", dpiContext, "ptr")
 
+    if (targetHwnd != 0) and WinExist("ahk_id " targetHwnd)
+        DllCall("ClipCursor", "Ptr", 0)
+
     return (outType == "Exit" ? False : _color)
 }
 
+;/** Place a ";" at the beginning of this line to test the color picker
 #c::
 {
-    _color := ColorPicker()
+    mainWindow := Gui()
+    mainWindow.MarginX := 5
+    mainWindow.MarginY := 5
+    mainWindow.SetFont("s8", "Lucida Console")
+    mainWindow.Show("w310 h460")
+    colorWheel := mainWindow.AddPicture("w300 h-1 +Border", "colorWheel.jpg")
+    colorBox := MainWindow.AddText("x10 y+10 w290 h64 +BackgroundBlack", "")
+    hexLabel := mainWindow.AddText("x10 y+10 w140", "Hex: #000000")
+    rgbLabel := mainWindow.AddText("x160 yp+0 w140", "RGB: 0, 0, 0")
+    hex_r := mainWindow.AddText("x10 y+5 w140", "R: 0x00")
+    rgb_r := mainWindow.AddText("x160 yp+0 w140", "R: 0")
+    hex_g := mainWindow.AddText("x10 y+5 w140", "G: 0x00")
+    rgb_g := mainWindow.AddText("x160 yp+0 w140", "G: 0")
+    hex_b := mainWindow.AddText("x10 y+5 w140", "B: 0x00")
+    rgb_b := mainWindow.AddText("x160 yp+0 w140", "B: 0")
+    colorWheel.OnEvent("Click", StartPicker)
 
-    if _color
+    _color := {}
+
+    StartPicker(*)
     {
-        ; RGB
-        rgb_r    := _color.RGB.R
-        rgb_g    := _color.RGB.G
-        rgb_b    := _color.RGB.B
-        rgb_full := _color.RGB.Full
+        hwnd := ControlGetHwnd(colorWheel)
+        _color := ColorPicker(False, hwnd, UpdateColors)
 
-        ; HEX
-        hex_r    := _color.Hex.R
-        hex_g    := _color.Hex.G
-        hex_b    := _color.Hex.B
-        hex_full := _color.Hex.Full
-
-        MsgBox("RGB: " rgb_full "`nR: " rgb_r "`nG: " rgb_g "`nB: " rgb_b "`n`nHex: " hex_full "`nR: " hex_r "`nG: " hex_g "`nB: " hex_b "`n`nClipboard: " A_Clipboard, "Selected Color Information")
+        MsgBox(_color ? "Color picked" : "Picker canceled")
     }
-    else
+
+    UpdateColors(color)
     {
-        MsgBox("ColorPicker function Exited by user.")
+        color.Hex.Full := StrReplace(color.Hex.Full, "#", "0x") ; Make sure that the string is in the right format.
+        colorBox.Opt("+Redraw +Background" color.Hex.Full)
+
+        hexLabel.Text := "Hex: " color.Hex.Full
+        hex_r.Text := "R: " color.Hex.R
+        hex_g.Text := "G: " color.Hex.G
+        hex_b.Text := "B: " color.Hex.B
+
+        rgbLabel.Text := "RGB: " color.RGB.Full
+        rgb_r.Text := "R: " String(color.RGB.R)
+        rgb_g.Text := "G: " String(color.RGB.G)
+        rgb_b.Text := "B: " String(color.RGB.B)
+
+        hexLabel.Opt("C" color.Hex.Full)
+        hex_r.Opt("C" color.Hex.R . "0000")
+        hex_g.Opt("C00" color.Hex.G . "00")
+        hex_b.Opt("C0000" color.Hex.B)
+
+        rgbLabel.Opt("C" color.Hex.Full)
+        rgb_r.Opt("C" color.Hex.R . "0000")
+        rgb_g.Opt("C00" color.Hex.G . "00")
+        rgb_b.Opt("C0000" color.Hex.B)
     }
 }
+;*/
