@@ -79,6 +79,15 @@
     /** @property {String} HexPartFormatString The format string used to format individual Hex components. */
     HexPartFormatString := "{1:s}"
 
+    /** @property {String} HSLFullFormatString The format string used to format the HSL.Full property */
+    HSLFullFormatString := "{1:s}, {2:s}%, {3:s}%"
+
+    /** @property {String} HSLHueFormatString The format string used to format the Hue HSL component. */
+    HSLHueFormatString := "{1:s}"
+
+    /** @property {String} HSLPercentFormatString The format string used to format saturation and lightness HSL components. */
+    HSLPercentFormatString := "{1:s}%"
+
     /** @property {Object} Color An object containing the current color in Hex and RGB formats */
     Color := {Hex:{R:0,G:0,B:0,Full:0}, RGB:{R:0,G:0,B:0,Full:0}}
 
@@ -158,6 +167,48 @@
             return dpi / 96
         }
 
+        RGBToHSL(color)
+        {
+            r := (color >> 16 & 0xFF) / 255
+            g := (color >> 8 & 0xFF) / 255
+            b := (color & 0xFF) / 255
+        
+            max := Max(r, g, b)
+            min := Min(r, g, b)
+            l := (max + min) / 2
+        
+            if (max == min)
+            {
+                h := 0
+                s := 0
+            }
+            else
+            {
+                d := max - min
+                s := (l > 0.5) ? d / (2 - max - min) : d / (max + min)
+        
+                if (max == r)
+                    h := (g - b) / d + (g < b ? 6 : 0)
+                else if (max == g)
+                    h := (b - r) / d + 2
+                else
+                    h := (r - g) / d + 4
+        
+                h /= 6
+            }
+
+            hue        := Round(h * 360)
+            saturation := Round(s * 100)
+            lightness  := Round(l * 100)
+        
+            return {
+                H: Format(this.HSLHueFormatString, hue),
+                S: Format(this.HSLPercentFormatString, saturation),
+                L: Format(this.HSLPercentFormatString, lightness),
+                Full: Format(this.HSLFullFormatString, hue, saturation, lightness)
+            }
+        }
+
         BlockLButton(*)
         {
             KeyWait("LButton", "D")
@@ -192,9 +243,8 @@
                 centralX     := width // 2
                 centralY     := height // 2
                 centralColor := DllCall("GetPixel", "Ptr", hMemDC, "Int", centralX, "Int", centralY, "UInt")
-                hexColor     := Format("#{:06X}", centralColor & 0xFFFFFF)
-
-                _tempCol := { B: SubStr(hexColor, 2, 2), G: SubStr(hexColor, 4, 2), R: SubStr(hexColor, 6, 2) }
+                hexColor     := Format("{:06X}", centralColor & 0xFFFFFF)
+                _tempCol := { B: SubStr(hexColor, 1, 2), G: SubStr(hexColor, 3, 2), R: SubStr(hexColor, 5, 2) }
                 hexColor := Format(this.HexFullFormatString, _tempCol.R, _tempCol.G, _tempCol.B)
                 this.Color := {
                     RGB: {
@@ -208,7 +258,8 @@
                         G: Format(this.HexPartFormatString, _tempCol.G),
                         B: Format(this.HexPartFormatString, _tempCol.B),
                         Full: Format(this.HexFullFormatString, _tempCol.R, _tempCol.G, _tempCol.B)
-                    }
+                    },
+                    HSL: RGBToHSL(hexColor)
                 }
 
                 ; Calculate preview size
