@@ -66,7 +66,7 @@ YACS is a project that started out as just a small function of a few lines, to j
 
      - The amount by which to multiply the preview size.
 
-     - `Length of preview window sides in pixels = captureSize * zoomFactor. (9 * 11 = 99x99 pixel preview window)`
+     - `window side length in pixels = captureSize * zoomFactor.` EX: (9 * 11 = 99x99 pixel preview)
 
  13. **`LargeJumpAmount`**
 
@@ -218,57 +218,57 @@ YACS is a project that started out as just a small function of a few lines, to j
 #Requires AutoHotKey v2.0
 #Include <ColorPicker>
 
-mainWindow  :=  Gui()
-mainWindow.MarginX  :=  5
-mainWindow.MarginY  :=  5
+mainWindow := Gui()
+mainWindow.MarginX := 5
+mainWindow.MarginY := 5
 mainWindow.SetFont("s8", "Lucida Console")
 mainWindow.Show("w310 h460")
-colorWheel  :=  mainWindow.AddPicture("w300 h-1 +Border", "colorWheel.jpg")
-colorBox  :=  MainWindow.AddText("x10 y+10 w290 h64 +BackgroundBlack", "")
-hexLabel  :=  mainWindow.AddText("x10 y+10 w140", "Hex: #000000")
-rgbLabel  :=  mainWindow.AddText("x160 yp+0 w140", "RGB: 0, 0, 0")
-hex_r  :=  mainWindow.AddText("x10 y+5 w140", "R: 0x00")
-rgb_r  :=  mainWindow.AddText("x160 yp+0 w140", "R: 0")
-hex_g  :=  mainWindow.AddText("x10 y+5 w140", "G: 0x00")
-rgb_g  :=  mainWindow.AddText("x160 yp+0 w140", "G: 0")
-hex_b  :=  mainWindow.AddText("x10 y+5 w140", "B: 0x00")
-rgb_b  :=  mainWindow.AddText("x160 yp+0 w140", "B: 0")
+colorWheel := mainWindow.AddPicture("w300 h-1 +Border", "colorWheel.jpg")
+colorBox := MainWindow.AddText("x10 y+10 w290 h64 +BackgroundBlack", "")
+hexLabel := mainWindow.AddText("x10 y+10 w140", "Hex: #000000")
+rgbLabel := mainWindow.AddText("x160 yp+0 w140", "RGB: 0, 0, 0")
+hex_r := mainWindow.AddText("x10 y+5 w140", "R: 0x00")
+rgb_r := mainWindow.AddText("x160 yp+0 w140", "R: 0")
+hex_g := mainWindow.AddText("x10 y+5 w140", "G: 0x00")
+rgb_g := mainWindow.AddText("x160 yp+0 w140", "G: 0")
+hex_b := mainWindow.AddText("x10 y+5 w140", "B: 0x00")
+rgb_b := mainWindow.AddText("x160 yp+0 w140", "B: 0")
 
-picker  :=  ColorPicker(False, ControlGetHwnd(colorWheel), UpdateColors)
-picker.FontName  :=  "Arial"
-picker.FontSize  :=  24
-picker.HexFullFormatString  :=  "0x{1:s}{2:s}{3:s}"
-picker.HexPartFormatString  :=  "{1:s}"
+picker := ColorPicker(False, ControlGetHwnd(colorWheel), UpdateColors)
+picker.FontName := "Arial"
+picker.FontSize := 24
+picker.HexFullFormatString := "0x{1:s}{2:s}{3:s}"
+picker.HexPartFormatString := "{1:s}"
 
-colorWheel.OnEvent("Click", (*) =>  picker.Start())
+colorWheel.OnEvent("Click", (*) => picker.Start())
 
-_color  := {}
+_color := {}
 
 UpdateColors(color)
 {
-    picker.TextFGColors[1] :=  "0x"  color.Hex.B  .  color.Hex.G  .  color.Hex.R
-    picker.TextFGColors[2] :=  "0x"  color.Hex.B  .  color.Hex.G  .  color.Hex.R
+    picker.TextFGColors[1] := "0x" color.Hex.B . color.Hex.G . color.Hex.R
+    picker.TextFGColors[2] := "0x" color.Hex.B . color.Hex.G . color.Hex.R
     colorBox.Opt("+Redraw +Background"  color.Hex.Full)
 
-    hexLabel.Text  :=  "Hex: "  color.Hex.Full
-    hex_r.Text  :=  "R: "  color.Hex.R
-    hex_g.Text  :=  "G: "  color.Hex.G
-    hex_b.Text  :=  "B: "  color.Hex.B
+    hexLabel.Text := "Hex: " color.Hex.Full
+    hex_r.Text := "R: " color.Hex.R
+    hex_g.Text := "G: " color.Hex.G
+    hex_b.Text := "B: " color.Hex.B
 
-    rgbLabel.Text  :=  "RGB: "  color.RGB.Full
-    rgb_r.Text  :=  "R: "  String(color.RGB.R)
-    rgb_g.Text  :=  "G: "  String(color.RGB.G)
-    rgb_b.Text  :=  "B: "  String(color.RGB.B)
+    rgbLabel.Text := "RGB: " color.RGB.Full
+    rgb_r.Text := "R: " String(color.RGB.R)
+    rgb_g.Text := "G: " String(color.RGB.G)
+    rgb_b.Text := "B: " String(color.RGB.B)
 
-    hexLabel.Opt("C"  color.Hex.Full)
-    hex_r.Opt("C"  color.Hex.R  .  "0000")
-    hex_g.Opt("C00"  color.Hex.G  .  "00")
-    hex_b.Opt("C0000"  color.Hex.B)
+    hexLabel.Opt("C" color.Hex.Full)
+    hex_r.Opt("C" color.Hex.R . "0000")
+    hex_g.Opt("C00" color.Hex.G . "00")
+    hex_b.Opt("C0000" color.Hex.B)
 
-    rgbLabel.Opt("C"  color.Hex.Full)
-    rgb_r.Opt("C"  color.Hex.R  .  "0000")
-    rgb_g.Opt("C00"  color.Hex.G  .  "00")
-    rgb_b.Opt("C0000"  color.Hex.B)
+    rgbLabel.Opt("C" color.Hex.Full)
+    rgb_r.Opt("C" color.Hex.R . "0000")
+    rgb_g.Opt("C00" color.Hex.G . "00")
+    rgb_b.Opt("C0000" color.Hex.B)
 }
 ```
 
