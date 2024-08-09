@@ -285,7 +285,7 @@ ColorPicker(clip := True, targetHwnd := 0, callback := 0)
     Suspend(True)
     Hotkey("*LButton", BlockLButton, "On S")
 
-    anchored := False, frozen := False, hexColor := "", outType := "", anchoredX := 0, anchoredY := 0, colorSet := 0, textHeight := 0
+    anchored := False, frozen := False, outType := "", anchoredX := 0, anchoredY := 0, colorSet := 0, textHeight := 0
     _color := {}
     zoomFactor     := defaultZoomFactor
     captureSize    := defaultCaptureSize
