@@ -6,15 +6,15 @@ YACS is a project that started out as just a small function of a few lines, to j
 
 ## Table of Contents
 
- 1. Introduction
+ 1. [Introduction](#introduction)
 
- 2. Properties
+ 2. [Properties](#properties)
 
- 3. Methods
+ 3. [Methods](#methods)
 
- 4. Usage
+ 4. [Usage](#usage)
 
- 5. Example
+ 5. [Example](#example)
 
 ## Properties
 
