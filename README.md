@@ -66,7 +66,7 @@ YACS is a project that started out as just a small function of a few lines, to j
 
      - The amount by which to multiply the preview size.
 
-     - `Length of preview window sides in pixels = captureSize * zoomFactor. (9 * 11 = 99x99 pixel preview window)`
+     - `window side length in pixels = captureSize * zoomFactor.` EX: (9 * 11 = 99x99 pixel preview)
 
  13. **`LargeJumpAmount`**
 
