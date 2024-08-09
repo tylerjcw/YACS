@@ -51,12 +51,12 @@ ColorPicker(clip := True)
 
     ; Color Configuration. Press "i" to cycle between the two color sets.
     ;=====================  SET 1  ===  SET 2  ==========================;
-    textFGColors     := [ 0x000000  , 0xFFFFFF   ] ; 0xBBGGRR Text Foreground
-    textBGColors     := [ 0xFFFFFF  , 0x000000   ] ; 0xBBGGRR Text Background
-    borderColors     := [ 0xFFFFFFFF, 0xFF000000 ] ; 0xAABBGGRR Border Color
-    crosshairColors  := [ 0xFFFFFFFF, 0xFF000000 ] ; 0xAABBGGRR Crosshair Color
-    gridColors       := [ 0xFFFFFFFF, 0xFF000000 ] ; 0xAABBGGRR Grid Color
-    highlightColors  := [ 0xFF000000, 0xFFFFFFFF ] ; 0xAABBGGRR Highlight Color for selected grid square
+    textFGColors     := [ 0xFFFFFF  , 0x000000   ] ; 0xBBGGRR Text Foreground
+    textBGColors     := [ 0x000000  , 0xFFFFFF   ] ; 0xBBGGRR Text Background
+    borderColors     := [ 0xFF000000, 0xFFFFFFFF ] ; 0xAABBGGRR Border Color
+    crosshairColors  := [ 0xFF000000, 0xFFFFFFFF ] ; 0xAABBGGRR Crosshair Color
+    gridColors       := [ 0xFF000000, 0xFFFFFFFF ] ; 0xAABBGGRR Grid Color
+    highlightColors  := [ 0xFFFFFFFF, 0xFF000000 ] ; 0xAABBGGRR Highlight Color for selected grid square
 
     ; Output format strings. These control how the values in the return object are formatted. The HexFullFormatString also controls what is displayed in the preview gui.
     RGBFullFormatString := "{1:u}, {2:u}, {3:u}" ; Format(RGBFullFormatString, "0x" r, "0x" g, "0x" b) (Switch to {3:i}, {2:i}, {1:i} for BGR)
@@ -501,15 +501,18 @@ ColorPicker(clip := True)
             zoomFactor := defaultZoomFactor
             captureSize := defaultCaptureSize
 
+            previewXOffset := Round(captureSize / 2) + borderWidth + 1
+            previewYOffset := Round(captureSize / 2) + borderWidth + 1
+
             if !KeyWait("0") or !KeyWait("Numpad0")
                 continue
         }
 
-        if GetKeyState("p", "P") or GetKeyState("Numpad5", "P")
+        if GetKeyState("f", "P") or GetKeyState("Numpad5", "P")
         {
             frozen := !frozen
 
-            if !KeyWait("p") or !KeyWait("Numpad5")
+            if !KeyWait("f") or !KeyWait("Numpad5")
                 continue
         }
 
