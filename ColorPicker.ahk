@@ -89,7 +89,7 @@
     HSLPercentFormatString := "{1:s}%"
 
     /** @property {Object} Color An object containing the current color in Hex and RGB formats */
-    Color := {Hex:{R:0,G:0,B:0,Full:0}, RGB:{R:0,G:0,B:0,Full:0}}
+    Color := {Hex:{R:0,G:0,B:0,Full:0}, RGB:{R:0,G:0,B:0,Full:0}, HSL:{H:0,S:0,L:0,Full:0}}
 
     /** @property {Boolean} Clip Whether to automatically copy the selected color to clipboard. */
     Clip := False
@@ -97,8 +97,11 @@
     /** @property {Number} TargetHWND The window or control handle to confine the color picker to. Default is 0 */
     TargetHWND := 0
 
-    /** @property {Function} Callback The function called when the picker is updated. Passed the `ColorPicker.Color` object. */
-    Callback := 0
+    /** @property {Function} OnUpdate The function called when the picker is updated. Passed the `ColorPicker.Color` object. */
+    OnUpdate := 0
+
+    /** @property {Function} OnExit The function called when the picker is closed. */
+    OnExit := 0
 
     ; Nothing below this line should need to be changed
     ;===========================================================================;
@@ -122,7 +125,7 @@
             this.TargetHWND := hwnd
 
         if (callback != 0) and (callback is func)
-            this.Callback := callback
+            this.OnUpdate := callback
 
         this.Clip := clip
     }
@@ -155,7 +158,7 @@
             this.TargetHWND := hwnd
 
         if (callback != 0) and (callback is func)
-            this.Callback := callback
+            this.OnUpdate := callback
 
         this.Clip := clip
 
@@ -173,23 +176,23 @@
             g := (color >> 8 & 0xFF) / 255
             b := (color & 0xFF) / 255
         
-            max := Max(r, g, b)
-            min := Min(r, g, b)
-            l := (max + min) / 2
+            _max := Max(r, g, b)
+            _min := Min(r, g, b)
+            l := (_max + _min) / 2
         
-            if (max == min)
+            if (_max == _min)
             {
                 h := 0
                 s := 0
             }
             else
             {
-                d := max - min
-                s := (l > 0.5) ? d / (2 - max - min) : d / (max + min)
+                d := _max - _min
+                s := (l > 0.5) ? d / (2 - _max - _min) : d / (_max + _min)
         
-                if (max == r)
+                if (_max == r)
                     h := (g - b) / d + (g < b ? 6 : 0)
-                else if (max == g)
+                else if (_max == g)
                     h := (b - r) / d + 2
                 else
                     h := (r - g) / d + 4
@@ -414,8 +417,8 @@
                 DllCall("DeleteObject", "Ptr", hBitmap)
                 DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
 
-                if (this.Callback != 0) and (this.Callback is Func)
-                    this.Callback.Call(this.Color)
+                if (this.OnUpdate != 0) and (this.OnUpdate is Func)
+                    this.OnUpdate.Call(this.Color)
             }
         }
 
@@ -705,37 +708,45 @@
             DllCall("ClipCursor", "Ptr", 0)
 
         this.Color := (outType == "Exit" ? startColor : this.Color)
-        this.Callback.Call(this.Color)
+        
+        if this.OnUpdate != 0
+            this.OnUpdate.Call(this.Color)
+
+        if this.OnExit != 0
+            this.OnExit.Call(this.Color)
 
         return (outType == "Exit" ? False : this.Color)
     }
 }
 
-/** Place a ";" at the beginning of this line to test the color picker
+;/** Place a ";" at the beginning of this line to test the color picker
 #c::
 {
     mainWindow := Gui()
     mainWindow.MarginX := 5
     mainWindow.MarginY := 5
     mainWindow.SetFont("s8", "Lucida Console")
-    mainWindow.Show("w310 h460")
+    mainWindow.Show("w310 h550")
+
     colorWheel := mainWindow.AddPicture("w300 h-1 +Border", "colorWheel.jpg")
-    colorBox := MainWindow.AddText("x10 y+10 w290 h64 +BackgroundBlack", "")
-    hexLabel := mainWindow.AddText("x10 y+10 w140", "Hex: #000000")
-    rgbLabel := mainWindow.AddText("x160 yp+0 w140", "RGB: 0, 0, 0")
-    hex_r := mainWindow.AddText("x10 y+5 w140", "R: 0x00")
-    rgb_r := mainWindow.AddText("x160 yp+0 w140", "R: 0")
-    hex_g := mainWindow.AddText("x10 y+5 w140", "G: 0x00")
-    rgb_g := mainWindow.AddText("x160 yp+0 w140", "G: 0")
-    hex_b := mainWindow.AddText("x10 y+5 w140", "B: 0x00")
-    rgb_b := mainWindow.AddText("x160 yp+0 w140", "B: 0")
+    colorBox   := mainWindow.AddText("x10 y+10 w290 h64 +BackgroundBlack", "")
+    hexLabel   := mainWindow.AddText("x10 y+10 w140", "Hex: #000000")
+    rgbLabel   := mainWindow.AddText("x160 yp+0 w140", "RGB: 0, 0, 0")
+    hex_r      := mainWindow.AddText("x10 y+5 w140", "R: 0x00")
+    rgb_r      := mainWindow.AddText("x160 yp+0 w140", "R: 0")
+    hex_g      := mainWindow.AddText("x10 y+5 w140", "G: 0x00")
+    rgb_g      := mainWindow.AddText("x160 yp+0 w140", "G: 0")
+    hex_b      := mainWindow.AddText("x10 y+5 w140", "B: 0x00")
+    rgb_b      := mainWindow.AddText("x160 yp+0 w140", "B: 0")
+    hslLabel   := mainWindow.AddText("x10 y+20 w140", "HSL: 0, 0%, 0%")
+    hsl_h      := mainWindow.AddText("x10 y+5 w140", "H: 0")
+    hsl_s      := mainWindow.AddText("x10 y+5 w140", "S: 0%")
+    hsl_l      := mainWindow.AddText("x10 y+5 w140", "L: 0%")
 
     picker := ColorPicker(False, ControlGetHwnd(colorWheel), UpdateColors)
     picker.FontName := "Papyrus"
     picker.FontSize := 24
-    picker.HexFullFormatString := "0x{1:s}{2:s}{3:s}"
-    picker.HexPartFormatString := "{1:s}"
-    picker.HighlightCenter := True
+    picker.OnExit := (color) => MsgBox("Color selected: " color.Hex.Full)
 
     colorWheel.OnEvent("Click", (*) => picker.Start())
 
@@ -757,6 +768,11 @@
         rgb_r.Text := "R: " String(color.RGB.R)
         rgb_g.Text := "G: " String(color.RGB.G)
         rgb_b.Text := "B: " String(color.RGB.B)
+
+        hslLabel.Text := "HSL: " color.HSL.Full
+        hsl_h.Text := "H: " color.HSL.H
+        hsl_s.Text := "S: " color.HSL.S
+        hsl_l.Text := "L: " color.HSL.L
 
         hexLabel.Opt("C" color.Hex.Full)
         hex_r.Opt("C" color.Hex.R . "0000")
