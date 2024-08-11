@@ -145,22 +145,11 @@
 
     /**
      * Starts the current instance of `ColorPicker`.
-     * @param {Boolean} [clip=True] Whether to copy the selected color to clipboard.
-     * @param {Number} [hwnd=0] The handle of the target window to confine the picker to.
-     * @param {Function} [callback=0] A callback function to be called with the selected color.
      * @returns {Boolean | Object} The `Color` object if a color was chosen, `False` otherwise.
      */
-    Start(clip := False, hwnd := 0, callback := 0)
+    Start()
     {
         startColor := this.Color
-
-        if (hwnd != 0) and (WinExist(hwnd))
-            this.TargetHWND := hwnd
-
-        if (callback != 0) and (callback is func)
-            this.OnUpdate := callback
-
-        this.Clip := clip
 
         try dpiContext := DllCall("SetThreadDpiAwarenessContext", "ptr", -3, "ptr")
 
@@ -175,11 +164,11 @@
             r := (color >> 16 & 0xFF) / 255
             g := (color >> 8 & 0xFF) / 255
             b := (color & 0xFF) / 255
-        
+
             _max := Max(r, g, b)
             _min := Min(r, g, b)
             l := (_max + _min) / 2
-        
+
             if (_max == _min)
             {
                 h := 0
@@ -189,21 +178,21 @@
             {
                 d := _max - _min
                 s := (l > 0.5) ? d / (2 - _max - _min) : d / (_max + _min)
-        
+
                 if (_max == r)
                     h := (g - b) / d + (g < b ? 6 : 0)
                 else if (_max == g)
                     h := (b - r) / d + 2
                 else
                     h := (r - g) / d + 4
-        
+
                 h /= 6
             }
 
             hue        := Round(h * 360)
             saturation := Round(s * 100)
             lightness  := Round(l * 100)
-        
+
             return {
                 H: Format(this.HSLHueFormatString, hue),
                 S: Format(this.HSLPercentFormatString, saturation),
@@ -690,7 +679,7 @@
             Sleep(10)
         }
 
-        if (clip == True) and ((outType == "HEX") or (outType == "RGB"))
+        if (this.Clip == True) and ((outType == "HEX") or (outType == "RGB"))
             A_Clipboard := (outType == "HEX" ? this.Color.Hex.Full : this.Color.RGB.Full)
 
         ; Cleanup
@@ -708,7 +697,7 @@
             DllCall("ClipCursor", "Ptr", 0)
 
         this.Color := (outType == "Exit" ? startColor : this.Color)
-        
+
         if this.OnUpdate != 0
             this.OnUpdate.Call(this.Color)
 
