@@ -59,6 +59,18 @@
     /** @property {String} RGBFormat The format string used for output of the RGB color value. Can use {R}, {G}, {B}, and {A}. */
     RGBFormat := "rgb({R}, {G}, {B})"
 
+    /** @property {Boolean} Anchored Whether or not the picker should be anchored in place. */
+    Anchored := False
+
+    /** @property {Boolean} CanUnanchor Whether or not the picker should be able to be un-anchored. */
+    CanUnanchor := True
+
+    /** If anchored, the X position at which the picker should be anchored */
+    AnchoredX := 0
+
+    /** If anchored, the `Y` position at which the picker should be anchored. */
+    AnchoredY := 0
+
     ; Color Configuration. Press "i" to cycle between the two color sets.
     ;===========================  SET 1  ===  SET 2  ================================;
     /** @property {Color[]} TextFGColors Text Foreground colors. Supports 2 indices, any more will be ignored. */
@@ -393,7 +405,7 @@
         Suspend(True)
         Hotkey("*LButton", BlockLButton, "On S")
 
-        anchored := False, frozen := False, outType := "", anchoredX := 0, anchoredY := 0, colorSet := 0, textHeight := 0
+        frozen := False, outType := "", colorSet := 0, textHeight := 0
         zoomFactor     := this.DefaultZoomFactor
         captureSize    := this.DefaultCaptureSize
 
@@ -433,9 +445,9 @@
                 mouseY := Max(confineTop, Min(mouseY, confineBottom))
             }
 
-            if anchored
+            if this.Anchored
             {
-                previewGui.Move(anchoredX, anchoredY)
+                previewGui.Move(this.AnchoredX, this.AnchoredY)
             }
             else
             {
@@ -504,11 +516,14 @@
             ; "A" toggles anchoring
             if GetKeyState("a", "P") or GetKeyState("NumpadDot", "P")
             {
-                anchored := !anchored
-                if anchored
+                if this.CanUnanchor
                 {
-                    anchoredX := mouseX + this.PreviewXOffset
-                    anchoredY := mouseY + this.PreviewYOffset
+                    this.Anchored := !this.Anchored
+                    if this.Anchored
+                    {
+                        this.AnchoredX := mouseX + this.PreviewXOffset
+                        this.AnchoredY := mouseY + this.PreviewYOffset
+                    }
                 }
 
                 if !KeyWait("a") or !KeyWait("NumpadDot")
