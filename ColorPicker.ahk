@@ -1,5 +1,7 @@
 #Requires AutoHotKey v2.0
 
+;#Include Color.ahk
+
 /**
  * ColorPicker class for encapsulating the color picker functionality.
  */
@@ -10,86 +12,77 @@
     FontName := "Maple Mono"
 
     /** @property {Number} FontSize The font size for the color preview text. */
-    FontSize           := 16
+    FontSize := 16
 
     /** @property {String} ViewMode The view mode of the color picker. Can be "crosshair", "grid", or any other value which will result in no overlay. */
-    ViewMode           := "grid"
+    ViewMode := "grid"
 
     /** @property {Integer} UpdateInterval The interval at which the preview will update, in milliseconds. 16ms = ~60 updates / second. */
-    UpdateInterval     := 16
+    UpdateInterval := 16
 
     /** @property {Boolean} HighlightCenter If True, highlights the pixel that the color is copied from. */
-    HighlightCenter    := True
+    HighlightCenter := True
 
     /** @property {Integer} BorderWidth Thickness of preview border, in pixels. */
-    BorderWidth        := 4
+    BorderWidth := 4
 
     /** @property {Integer} CrosshairWidth Thickness of crosshair lines, in pixels. */
-    CrosshairWidth     := 1
+    CrosshairWidth := 1
 
     /** @property {Integer} GridWidth Thickness of grid lines, in pixels. */
-    GridWidth          := 1
+    GridWidth := 1
 
     /** @property {Integer} CenterDotRadius Radius of the Center Dot when not in "grid" or "crosshair" mode, in pixels. */
-    CenterDotRadius    := 2
+    CenterDotRadius := 2
 
     /** @property {Integer} TextPadding The padding added above and below the preview Hex String, in pixels (half above, half below) */
-    TextPadding        := 6
+    TextPadding := 6
 
     /** @property {Integer} DefaultCaptureSize The size of area you want to capture around the cursor in pixels (N by N square) */
     DefaultCaptureSize := 19
 
     /** @property {Integer} DefaultZoomFactor How much to multiply each pixel by. Default is 10x. */
-    DefaultZoomFactor  := 10
+    DefaultZoomFactor := 10
 
-    /** @property {Integer} How many pixels to move the preview window by when holding shift and moving it with the keyboard. */
-    LargeJumpAmount    := 16
+    /** @property {Integer} LargeJumpAmount How many pixels to move the preview window by when holding shift and moving it with the keyboard. */
+    LargeJumpAmount := 16
+
+    /** @property {Integer} PreviewXOffset Horizontal offset of the preview window from the cursor, in pixels. */
+    PreviewXOffset := 10
+
+    /** @property {Integer} PreviewYOffset Vertical offset of the preview window from the cursor, in pixels. */
+    PreviewYOffset := 10
+
+    /** @property {String} HexFormat The format string used to display and output the hex color value. Can use {R}, {G}, {B}, and {A}. */
+    HexFormat := "#{R}{G}{B}"
+
+    /** @property {String} RGBFormat The format string used for output of the RGB color value. Can use {R}, {G}, {B}, and {A}. */
+    RGBFormat := "rgb({R}, {G}, {B})"
 
     ; Color Configuration. Press "i" to cycle between the two color sets.
-    ;=====================  SET 1  ===  SET 2  ==========================;
-    /** @property {Integer[]} TextFGColors 0xBBGGRR Text Foreground colors. Supports 2 indices, any more will be ignored. */
-    TextFGColors     := [ 0xFFFFFF  , 0x000000   ]
+    ;===========================  SET 1  ===  SET 2  ================================;
+    /** @property {Color[]} TextFGColors Text Foreground colors. Supports 2 indices, any more will be ignored. */
+    TextFGColors    := [ Color("White"), Color("Black") ]
 
-    /** @property {Integer[]} TextBGColors 0xBBGGRR Text Background colors. Supports 2 indices, any more will be ignored. */
-    TextBGColors     := [ 0x000000  , 0xFFFFFF   ]
+    /** @property {Color[]} TextBGColors Text Background colors. Supports 2 indices, any more will be ignored. */
+    TextBGColors    := [ Color("Black"), Color("White") ]
 
-    /** @property {Integer[]} BorderColors 0xAABBGGRR Border colors. Supports 2 indices, any more will be ignored. */
-    BorderColors     := [ 0xFF000000, 0xFFFFFFFF ]
+    /** @property {Color[]} BorderColors Border colors. Supports 2 indices, any more will be ignored. */
+    BorderColors    := [ Color("Black"), Color("White") ]
 
-    /** @property {Integer[]} CrosshairColors 0xAABBGGRR Crosshair Color. Supports 2 indices, any more will be ignored. */
-    CrosshairColors  := [ 0xFF000000, 0xFFFFFFFF ]
+    /** @property {Color[]} CrosshairColors Crosshair Color. Supports 2 indices, any more will be ignored. */
+    CrosshairColors := [ Color("Black"), Color("White") ]
 
-    /** @property {Integer[]} GridColors 0xAABBGGRR Grid Color. Supports 2 indices, any more will be ignored. */
-    GridColors       := [ 0xFF000000, 0xFFFFFFFF ]
+    /** @property {Color[]} GridColors Grid Color. Supports 2 indices, any more will be ignored. */
+    GridColors      := [ Color("Black"), Color("White") ]
 
-    /** @property {Integer[]} HighlightColors 0xAABBGGRR Highlight Color for selected grid square. Supports 2 indices, any more will be ignored. */
-    HighlightColors  := [ 0xFFFFFFFF, 0xFF000000 ]
+    /** @property {Color[]} HighlightColors Highlight Color for selected grid square. Supports 2 indices, any more will be ignored. */
+    HighlightColors := [ Color("White"), Color("Black") ]
 
-    ; Output Format Configuration
-    ;========================================================================;
-    /** @property {String} RGBFullFormatString The format string used to format the RGB.Full property */
-    RGBFullFormatString := "{1:u}, {2:u}, {3:u}"
-
-    /** @property {String} RGBPartFormatString The format string used to format individual RGB components. */
-    RGBPartFormatString := "{1:u}"
-
-    /** @property {String} HexFullFormatString The format string used to format the Hex.Full property */
-    HexFullFormatString := "0x{1:s}{2:s}{3:s}"
-
-    /** @property {String} HexPartFormatString The format string used to format individual Hex components. */
-    HexPartFormatString := "{1:s}"
-
-    /** @property {String} HSLFullFormatString The format string used to format the HSL.Full property */
-    HSLFullFormatString := "{1:s}, {2:s}%, {3:s}%"
-
-    /** @property {String} HSLHueFormatString The format string used to format the Hue HSL component. */
-    HSLHueFormatString := "{1:s}"
-
-    /** @property {String} HSLPercentFormatString The format string used to format saturation and lightness HSL components. */
-    HSLPercentFormatString := "{1:s}%"
-
-    /** @property {Object} Color An object containing the current color in Hex and RGB formats */
-    Color := {Hex:{R:0,G:0,B:0,Full:0}, RGB:{R:0,G:0,B:0,Full:0}, HSL:{H:0,S:0,L:0,Full:0}}
+    ; Nothing below this line should need to be changed
+    ;===========================================================================;
+    /** @property {Object} Color An object containing the current RGB color. Has methods to convert to and from Hex, HSL, HWB, CMYK, and NCol */
+    Color := Color()
 
     /** @property {Boolean} Clip Whether to automatically copy the selected color to clipboard. */
     Clip := False
@@ -97,21 +90,59 @@
     /** @property {Number} TargetHWND The window or control handle to confine the color picker to. Default is 0 */
     TargetHWND := 0
 
+    /** @property {Function} OnStart The function called when the picker starts. */
+    OnStart := 0
+
     /** @property {Function} OnUpdate The function called when the picker is updated. Passed the `ColorPicker.Color` object. */
     OnUpdate := 0
 
     /** @property {Function} OnExit The function called when the picker is closed. */
     OnExit := 0
 
-    ; Nothing below this line should need to be changed
-    ;===========================================================================;
+    /** @property {Integer} `0` or `1` to select between the two color sets. */
     ColorSet := 0
-    TextFGColor    => this.TextFGColors[this.ColorSet + 1]
-    TextBGColor    => this.TextBGColors[this.ColorSet + 1]
-    BorderColor    => this.BorderColors[this.ColorSet + 1]
-    CrosshairColor => this.CrosshairColors[this.ColorSet + 1]
-    GridColor      => this.GridColors[this.ColorSet + 1]
-    HighlightColor => this.HighlightColors[this.ColorSet + 1]
+
+    /** @property {Color} TextFGColor Gets or Sets the currently selected color set's Text Foreground Color */
+    TextFGColor
+    {
+        get => this.TextFGColors[this.ColorSet + 1]
+        set => this.TextFGColors[this.ColorSet + 1] := value
+    }
+
+    /** @property {Color} TextBGColor Gets or Sets the currently selected color set's Text Background Color */
+    TextBGColor
+    {
+        get => this.TextBGColors[this.ColorSet + 1]
+        set => this.TextBGColors[this.ColorSet + 1] := value
+    }
+
+    /** @property {Color} BorderColor Gets or Sets the currently selected color set's Border Color */
+    BorderColor
+    {
+        get => this.BorderColors[this.ColorSet + 1]
+        set => this.BorderColors[this.ColorSet + 1] := value
+    }
+
+    /** @property {Color} CrosshairColor Gets or Sets the currently selected color set's Crosshair Color */
+    CrosshairColor
+    {
+        get => this.CrosshairColors[this.ColorSet + 1]
+        set => this.CrosshairColors[this.ColorSet + 1] := value
+    }
+
+    /** @property {Color} GridColor Gets or Sets the currently selected color set's Grid Color */
+    GridColor
+    {
+        get => this.GridColors[this.ColorSet + 1]
+        set => this.GridColors[this.ColorSet + 1] := value
+    }
+
+    /** @property {Color} HighlightColor Gets or Sets the currently selected color set's Highlight Color */
+    HighlightColor
+    {
+        get => this.HighlightColors[this.ColorSet + 1]
+        set => this.HighlightColors[this.ColorSet + 1] := value
+    }
 
     /**
      * Creates a new instance of `ColorPicker`
@@ -149,6 +180,9 @@
      */
     Start()
     {
+        if this.OnStart is Func
+            this.OnStart.Call()
+
         startColor := this.Color
 
         try dpiContext := DllCall("SetThreadDpiAwarenessContext", "ptr", -3, "ptr")
@@ -157,48 +191,6 @@
         {
             dpi := DllCall("User32.dll\GetDpiForWindow", "Ptr", guiHwnd, "UInt")
             return dpi / 96
-        }
-
-        RGBToHSL(color)
-        {
-            r := (color >> 16 & 0xFF) / 255
-            g := (color >> 8 & 0xFF) / 255
-            b := (color & 0xFF) / 255
-
-            _max := Max(r, g, b)
-            _min := Min(r, g, b)
-            l := (_max + _min) / 2
-
-            if (_max == _min)
-            {
-                h := 0
-                s := 0
-            }
-            else
-            {
-                d := _max - _min
-                s := (l > 0.5) ? d / (2 - _max - _min) : d / (_max + _min)
-
-                if (_max == r)
-                    h := (g - b) / d + (g < b ? 6 : 0)
-                else if (_max == g)
-                    h := (b - r) / d + 2
-                else
-                    h := (r - g) / d + 4
-
-                h /= 6
-            }
-
-            hue        := Round(h * 360)
-            saturation := Round(s * 100)
-            lightness  := Round(l * 100)
-
-            return {
-                H: Format(this.HSLHueFormatString, hue),
-                S: Format(this.HSLPercentFormatString, saturation),
-                L: Format(this.HSLPercentFormatString, lightness),
-                Full: Format(this.HSLFullFormatString, hue, saturation, lightness)
-            }
         }
 
         BlockLButton(*)
@@ -236,23 +228,8 @@
                 centralY     := height // 2
                 centralColor := DllCall("GetPixel", "Ptr", hMemDC, "Int", centralX, "Int", centralY, "UInt")
                 hexColor     := Format("{:06X}", centralColor & 0xFFFFFF)
-                _tempCol := { B: SubStr(hexColor, 1, 2), G: SubStr(hexColor, 3, 2), R: SubStr(hexColor, 5, 2) }
-                hexColor := Format(this.HexFullFormatString, _tempCol.R, _tempCol.G, _tempCol.B)
-                this.Color := {
-                    RGB: {
-                        R: Format(this.RGBPartFormatString, "0x" _tempCol.R),
-                        G: Format(this.RGBPartFormatString, "0x" _tempCol.G),
-                        B: Format(this.RGBPartFormatString, "0x" _tempCol.B),
-                        Full: Format(this.RGBFullFormatString, "0x" _tempCol.R, "0x" _tempCol.G, "0x" _tempCol.B)
-                    },
-                    Hex: {
-                        R: Format(this.HexPartFormatString, _tempCol.R),
-                        G: Format(this.HexPartFormatString, _tempCol.G),
-                        B: Format(this.HexPartFormatString, _tempCol.B),
-                        Full: Format(this.HexFullFormatString, _tempCol.R, _tempCol.G, _tempCol.B)
-                    },
-                    HSL: RGBToHSL(hexColor)
-                }
+                this.Color   := Color(Format("{1}{2}{3}", SubStr(hexColor, 5, 2), SubStr(hexColor, 3, 2), SubStr(hexColor, 1, 2)))
+                hexColor     := this.Color.ToHex(this.HexFormat).Full
 
                 ; Calculate preview size
                 scaledZoomFactor := Round(zoomFactor * dpiScale)
@@ -280,7 +257,7 @@
                 DllCall("StretchBlt", "Ptr", hHighResDC, "Int", 0, "Int", 0, "Int", previewWidth * 4, "Int", previewHeight * 4, "Ptr", hMemDC, "Int", 0, "Int", 0, "Int", width, "Int", height, "UInt", 0x00CC0020)
 
                 ; Draw background rectangle
-                hBrush := DllCall("CreateSolidBrush", "UInt", this.TextBGColor, "Ptr")
+                hBrush := DllCall("CreateSolidBrush", "UInt", this.TextBGColor.ToHex("0x{B}{G}{R}").Full, "Ptr")
                 rect := Buffer(16, 0)
                 NumPut("Int", 0, rect, 0)
                 NumPut("Int", previewHeight * 4, rect, 4)
@@ -291,8 +268,8 @@
 
                 ; Render text at high resolution
                 DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hFont)
-                DllCall("SetTextColor", "Ptr", hHighResDC, "UInt", this.TextFGColor)
-                DllCall("SetBkColor", "Ptr", hHighResDC, "UInt", this.TextBGColor)
+                DllCall("SetTextColor", "Ptr", hHighResDC, "UInt", this.TextFGColor.ToHex("0x{B}{G}{R}").Full)
+                DllCall("SetBkColor", "Ptr", hHighResDC, "UInt", this.TextBGColor.ToHex("0x{B}{G}{R}").Full)
                 textWidth := DllCall("GetTextExtentPoint32", "Ptr", hHighResDC, "Str", hexColor, "Int", StrLen(hexColor), "Ptr", rect)
                 textX := (previewWidth * 4 - NumGet(rect, 0, "Int")) // 2
                 textY := previewHeight * 4 + (textHeight * 4 - scaledFontSize * 4) // 2
@@ -305,7 +282,7 @@
                     centerX := Round(previewWidth * 2) + offset
                     centerY := Round(previewHeight * 2) + offset
                     halfZoom := Round(zoomFactor * 2)
-                    hCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", Round(this.CrosshairWidth * dpiScale) * 4, "UInt", this.CrosshairColor & 0xFFFFFF, "Ptr")
+                    hCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", Round(this.CrosshairWidth * dpiScale) * 4, "UInt", this.CrosshairColor.ToHex("0x{A}{B}{G}{R}").Full & 0xFFFFFF, "Ptr")
                     DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hCrosshairPen)
                     DllCall("MoveToEx", "Ptr", hHighResDC, "Int", centerX, "Int", 0, "Ptr", 0)
                     DllCall("LineTo", "Ptr", hHighResDC, "Int", centerX, "Int", previewHeight * 4)
@@ -313,7 +290,7 @@
                     DllCall("LineTo", "Ptr", hHighResDC, "Int", previewWidth * 4, "Int", centerY)
                     if this.HighlightCenter
                     {
-                        hInnerCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", Round(this.CrosshairWidth * dpiScale) * 4, "UInt", this.HighlightColor & 0xFFFFFF, "Ptr")
+                        hInnerCrosshairPen := DllCall("CreatePen", "Int", 0, "Int", Round(this.CrosshairWidth * dpiScale) * 4, "UInt", this.HighlightColor.ToHex("0x{A}{B}{G}{R}").Full & 0xFFFFFF, "Ptr")
                         DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hInnerCrosshairPen)
                         DllCall("MoveToEx", "Ptr", hHighResDC, "Int", centerX, "Int", centerY - halfZoom, "Ptr", 0)
                         DllCall("LineTo", "Ptr", hHighResDC, "Int", centerX, "Int", centerY + halfZoom)
@@ -332,7 +309,7 @@
                         centerIndex := captureSize // 2 + (captureSize & 1)
 
                     ; Draw grid
-                    hGridPen := DllCall("CreatePen", "Int", 0, "Int", Round(this.GridWidth * dpiScale) * 4, "UInt", this.GridColor & 0xFFFFFF, "Ptr")
+                    hGridPen := DllCall("CreatePen", "Int", 0, "Int", Round(this.GridWidth * dpiScale) * 4, "UInt", this.GridColor.ToHex("0x{A}{B}{G}{R}").Full & 0xFFFFFF, "Ptr")
                     DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hGridPen)
 
                     Loop captureSize + 1
@@ -347,7 +324,7 @@
                     if this.HighlightCenter
                     {
                         ; Highlight the center or lower-right of center square
-                        hHighlightPen := DllCall("CreatePen", "Int", 0, "Int", Round(this.GridWidth * dpiScale) * 4, "UInt", this.HighlightColor & 0xFFFFFF, "Ptr")
+                        hHighlightPen := DllCall("CreatePen", "Int", 0, "Int", Round(this.GridWidth * dpiScale) * 4, "UInt", this.HighlightColor.ToHex("0x{A}{B}{G}{R}").Full & 0xFFFFFF, "Ptr")
                         DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hHighlightPen)
                         DllCall("MoveToEx", "Ptr", hHighResDC, "Int", (centerIndex - 1) * scaledZoomFactor * 4, "Int", (centerIndex - 1) * scaledZoomFactor * 4, "Ptr", 0)
                         DllCall("LineTo", "Ptr", hHighResDC, "Int", centerIndex * scaledZoomFactor * 4, "Int", (centerIndex - 1) * scaledZoomFactor * 4)
@@ -365,14 +342,14 @@
                     centerX := Round(previewWidth * 2) + offset
                     centerY := Round(previewHeight * 2) + offset
                     dotSize := Round(4 * dpiScale) * this.CenterDotRadius
-                    hDotBrush := DllCall("CreateSolidBrush", "UInt", this.HighlightColor & 0xFFFFFF, "Ptr")
+                    hDotBrush := DllCall("CreateSolidBrush", "UInt", this.HighlightColor.ToHex("0x{A}{B}{G}{R}").Full & 0xFFFFFF, "Ptr")
                     DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hDotBrush)
                     DllCall("Ellipse", "Ptr", hHighResDC, "Int", centerX - Round(dotSize * dpiScale), "Int", centerY - Round(dotSize * dpiScale), "Int", centerX + Round(dotSize * dpiScale), "Int", centerY + Round(dotSize * dpiScale))
                     DllCall("DeleteObject", "Ptr", hDotBrush)
                 }
 
                 ; Draw border
-                hBorderPen := DllCall("CreatePen", "Int", 0, "Int", this.BorderWidth * 4, "UInt", this.BorderColor & 0xFFFFFF, "Ptr")
+                hBorderPen := DllCall("CreatePen", "Int", 0, "Int", this.BorderWidth * 4, "UInt", this.BorderColor.ToHex("0x{A}{B}{G}{R}").Full & 0xFFFFFF, "Ptr")
                 DllCall("SelectObject", "Ptr", hHighResDC, "Ptr", hBorderPen)
                 DllCall("MoveToEx", "Ptr", hHighResDC, "Int", 0, "Int", 0, "Ptr", 0)
                 DllCall("LineTo", "Ptr", hHighResDC, "Int", previewWidth * 4, "Int", 0)
@@ -417,13 +394,13 @@
         Hotkey("*LButton", BlockLButton, "On S")
 
         anchored := False, frozen := False, outType := "", anchoredX := 0, anchoredY := 0, colorSet := 0, textHeight := 0
-        this.Color := {}
         zoomFactor     := this.DefaultZoomFactor
         captureSize    := this.DefaultCaptureSize
-        previewXOffset := Round(captureSize / 2) + this.BorderWidth + 1
-        previewYOffset := Round(captureSize / 2) + this.BorderWidth + 1
 
-        previewGui := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x80000 -DPIScale")
+        previewGui := Gui("+AlwaysOnTop -Caption +ToolWindow -DPIScale")
+        if not DllCall("User32\SetWindowDisplayAffinity", "Ptr", previewGui.hWnd, "Int", 0x00000011, "Int") ; WDA_EXCLUDEFROMCAPTURE
+            OutputDebug("Failed to set affinity:" A_LastError)
+        previewGui.Opt(" +E0x80000")
         previewGui.Show()
         SetTimer(CaptureAndPreview, this.UpdateInterval)
 
@@ -465,8 +442,8 @@
                 previewWidth  := captureSize * zoomFactor + this.BorderWidth * 2
                 previewHeight := captureSize * zoomFactor + this.BorderWidth * 2 + textHeight
 
-                newX := mouseX + previewXOffset
-                newY := mouseY + previewYOffset
+                newX := mouseX + this.PreviewXOffset
+                newY := mouseY + this.PreviewYOffset
 
                 monitorCount := MonitorGetCount()
                 dpiScale := GetDpiScale(previewGui.Hwnd)
@@ -482,11 +459,11 @@
 
                         ; Adjust for right edge
                         if (newX + scaledPreviewWidth > right)
-                            newX := mouseX - previewXOffset * dpiScale - scaledPreviewWidth
+                            newX := mouseX - this.PreviewXOffset * dpiScale - scaledPreviewWidth
 
                         ; Adjust for bottom edge, including taskbar
                         if (newY + scaledPreviewHeight > bottom)
-                            newY := mouseY - previewYOffset * dpiScale - scaledPreviewHeight
+                            newY := mouseY - this.PreviewYOffset * dpiScale - scaledPreviewHeight
 
                         ; Ensure the preview stays within the monitor bounds
                         newX := Max(left, Min(newX, right - scaledPreviewWidth))
@@ -530,8 +507,8 @@
                 anchored := !anchored
                 if anchored
                 {
-                    anchoredX := mouseX + previewXOffset
-                    anchoredY := mouseY + previewYOffset
+                    anchoredX := mouseX + this.PreviewXOffset
+                    anchoredY := mouseY + this.PreviewYOffset
                 }
 
                 if !KeyWait("a") or !KeyWait("NumpadDot")
@@ -618,9 +595,6 @@
             {
                 captureSize := Max(1, --captureSize)
 
-                previewXOffset := Round(captureSize / 2) + this.BorderWidth + 1
-                previewYOffset := Round(captureSize / 2) + this.BorderWidth + 1
-
                 if !KeyWait("-") or !KeyWait("NumpadSub")
                     continue
             }
@@ -629,9 +603,6 @@
             if GetKeyState("=", "P") or GetKeyState("NumpadAdd", "P")
             {
                 captureSize := ++captureSize
-
-                previewXOffset := Round(captureSize / 2) + this.BorderWidth + 1
-                previewYOffset := Round(captureSize / 2) + this.BorderWidth + 1
 
                 if !KeyWait("=") or !KeyWait("NumpadAdd")
                     continue
@@ -660,8 +631,8 @@
                 zoomFactor := this.DefaultZoomFactor
                 captureSize := this.DefaultCaptureSize
 
-                previewXOffset := Round(captureSize / 2) + this.BorderWidth + 1
-                previewYOffset := Round(captureSize / 2) + this.BorderWidth + 1
+                this.PreviewXOffset := Round(captureSize / 2) + this.BorderWidth + 1
+                this.PreviewYOffset := Round(captureSize / 2) + this.BorderWidth + 1
 
                 if !KeyWait("0") or !KeyWait("Numpad0")
                     continue
@@ -679,8 +650,11 @@
             Sleep(10)
         }
 
+        this.Color.RGBFormat := this.RGBFormat
+        this.Color.HexFormat := this.HexFormat
+
         if (this.Clip == True) and ((outType == "HEX") or (outType == "RGB"))
-            A_Clipboard := (outType == "HEX" ? this.Color.Hex.Full : this.Color.RGB.Full)
+            A_Clipboard := (outType == "HEX" ? this.Color.ToHex().Full : this.Color.Full)
 
         ; Cleanup
         SetTimer(CaptureAndPreview, 0)  ; Turn off the timer
@@ -698,10 +672,10 @@
 
         this.Color := (outType == "Exit" ? startColor : this.Color)
 
-        if this.OnUpdate != 0
+        if this.OnUpdate is Func
             this.OnUpdate.Call(this.Color)
 
-        if this.OnExit != 0
+        if this.OnExit is Func
             this.OnExit.Call(this.Color)
 
         return (outType == "Exit" ? False : this.Color)
@@ -732,45 +706,48 @@
     hsl_s      := mainWindow.AddText("x10 y+5 w140", "S: 0%")
     hsl_l      := mainWindow.AddText("x10 y+5 w140", "L: 0%")
 
-    picker := ColorPicker(False, ControlGetHwnd(colorWheel), UpdateColors)
+    picker := ColorPicker(True,, UpdateColors)
     picker.FontName := "Papyrus"
     picker.FontSize := 24
-    picker.OnExit := (color) => MsgBox("Color selected: " color.Hex.Full)
+    picker.OnExit := (color) => MsgBox(color.ToHex("Color selected: #{R}{G}{B}").Full)
 
     colorWheel.OnEvent("Click", (*) => picker.Start())
 
-    _color := {}
-
     UpdateColors(color)
     {
-        picker.TextFGColors[1] := "0x" color.Hex.B . color.Hex.G . color.Hex.R
-        picker.TextFGColors[2] := "0x" color.Hex.B . color.Hex.G . color.Hex.R
+        hex := color.ToHex("0x{B}{G}{R}")
 
-        colorBox.Opt("+Redraw +Background" color.Hex.Full)
+        picker.TextFGColors[1] := color
+        picker.TextFGColors[2] := color
 
-        hexLabel.Text := "Hex: " color.Hex.Full
-        hex_r.Text := "R: " color.Hex.R
-        hex_g.Text := "G: " color.Hex.G
-        hex_b.Text := "B: " color.Hex.B
+        hex := color.ToHex("{R}{G}{B}")
+        colorBox.Opt("+Redraw +Background" hex.Full)
 
-        rgbLabel.Text := "RGB: " color.RGB.Full
-        rgb_r.Text := "R: " String(color.RGB.R)
-        rgb_g.Text := "G: " String(color.RGB.G)
-        rgb_b.Text := "B: " String(color.RGB.B)
+        hexLabel.Text := "Hex: #" hex.Full
+        hex_r.Text := "R: " hex.R
+        hex_g.Text := "G: " hex.G
+        hex_b.Text := "B: " hex.B
 
-        hslLabel.Text := "HSL: " color.HSL.Full
-        hsl_h.Text := "H: " color.HSL.H
-        hsl_s.Text := "S: " color.HSL.S
-        hsl_l.Text := "L: " color.HSL.L
+        color.RGBFormat := "RGB: {R}, {G}, {B}"
+        rgbLabel.Text := color.Full
+        rgb_r.Text := "R: " color.R
+        rgb_g.Text := "G: " color.G
+        rgb_b.Text := "B: " color.B
 
-        hexLabel.Opt("C" color.Hex.Full)
-        hex_r.Opt("C" color.Hex.R . "0000")
-        hex_g.Opt("C00" color.Hex.G . "00")
-        hex_b.Opt("C0000" color.Hex.B)
+        hsl := color.ToHSL("HSL: {H}, {S}%, {L}%")
+        hslLabel.Text := hsl.Full
+        hsl_h.Text := "H: " hsl.H
+        hsl_s.Text := "S: " hsl.S
+        hsl_l.Text := "L: " hsl.L
 
-        rgbLabel.Opt("C" color.Hex.Full)
-        rgb_r.Opt("C" color.Hex.R . "0000")
-        rgb_g.Opt("C00" color.Hex.G . "00")
-        rgb_b.Opt("C0000" color.Hex.B)
+        hexLabel.Opt("C" hex.Full)
+        hex_r.Opt("C" hex.R . "0000")
+        hex_g.Opt("C00" hex.G . "00")
+        hex_b.Opt("C0000" hex.B)
+
+        rgbLabel.Opt("C" hex.Full)
+        rgb_r.Opt("C" hex.R . "0000")
+        rgb_g.Opt("C00" hex.G . "00")
+        rgb_b.Opt("C0000" hex.B)
     }
 }
