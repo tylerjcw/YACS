@@ -201,10 +201,13 @@ class Color
 
         l := (cmax + cmin) / 2
 
-        if (delta == 0) {
+        if (delta == 0)
+        {
             h := 0
             s := 0
-        } else {
+        }
+        else
+        {
             s := delta / (1 - Abs(2 * l - 1))
 
             if (cmax == r)
@@ -303,11 +306,14 @@ class Color
     
         k := 1 - Max(r, g, b)
         
-        if (k == 1) {
+        if (k == 1)
+        {
             c := 0
             m := 0
             y := 0
-        } else {
+        }
+        else
+        {
             c := (1 - r - k) / (1 - k)
             m := (1 - g - k) / (1 - k)
             y := (1 - b - k) / (1 - k)
@@ -434,14 +440,18 @@ class Color
      * @param {Integer} l Lightness  - `0-100`
      * @returns {Color}
      */
-    static FromHSL(h, s, l) {
+    static FromHSL(h, s, l)
+    {
         h := Mod(h, 360) / 360
         s := Clamp(s, 0, 100) / 100
         l := Clamp(l, 0, 100) / 100
 
-        if (s == 0) {
+        if (s == 0)
+        {
             r := g := b := l
-        } else {
+        }
+        else
+        {
             q := l < 0.5 ? l * (1 + s) : l + s - l * s
             p := 2 * l - q
             r := HueToRGB(p, q, h + 1/3)
@@ -453,7 +463,8 @@ class Color
 
         Clamp(val, low, high) => Min(Max(val, low), high)
 
-        HueToRGB(p, q, t) {
+        HueToRGB(p, q, t)
+        {
             if (t < 0) 
                 t += 1
             if (t > 1) 
@@ -481,7 +492,8 @@ class Color
         w := Clamp(w, 0, 100) / 100
         b := Clamp(b, 0, 100) / 100
     
-        if (w + b >= 1) {
+        if (w + b >= 1)
+        {
             g := w / (w + b)
             return Color(Round(g * 255), Round(g * 255), Round(g * 255))
         }
@@ -569,11 +581,14 @@ class Color
         r := 0
         g := 0
         b := 0
-        for _color in colors {
+
+        for _color in colors
+        {
             r += _color.R
             g += _color.G
             b += _color.B
         }
+
         count := colors.Length
         return Color(Round(r / count), Round(g / count), Round(b / count))
     }
@@ -588,11 +603,14 @@ class Color
         r := 1
         g := 1
         b := 1
-        for _color in colors {
+
+        for _color in colors
+        {
             r *= _color.R / 255
             g *= _color.G / 255
             b *= _color.B / 255
         }
+
         return Color(Round(r * 255), Round(g * 255), Round(b * 255))
     }
 
@@ -764,6 +782,7 @@ class Color
         r := Round(this.R * (1 - w) + _color.R * w)
         g := Round(this.G * (1 - w) + _color.G * w)
         b := Round(this.B * (1 - w) + _color.B * w)
+
         return Color.FromRGB(r, g, b)
     }
 
@@ -797,6 +816,7 @@ class Color
         hsl := this.ToHSL()
         color2 := Color.FromHSL(Mod(hsl.H + 120, 360), hsl.S, hsl.L)
         color3 := Color.FromHSL(Mod(hsl.H + 240, 360), hsl.S, hsl.L)
+
         return [this, color2, color3]
     }
 
@@ -818,6 +838,7 @@ class Color
         }
         
         gradient.Push(endColor)
+        
         return gradient
     }
 }

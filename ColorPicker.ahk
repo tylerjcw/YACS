@@ -1,6 +1,5 @@
 #Requires AutoHotKey v2.0
-
-;#Include Color.ahk
+#Include Color.ahk
 
 /**
  * ColorPicker class for encapsulating the color picker functionality.
@@ -65,10 +64,14 @@
     /** @property {Boolean} CanUnanchor Whether or not the picker should be able to be un-anchored. */
     CanUnanchor := True
 
-    /** If anchored, the X position at which the picker should be anchored */
+    /** @property {Integer} AnchorTarget HWND of the window to anchor the picker to, if Anchored is True. */
+
+    /** @property {Integer} AnchoredX If anchored, the `X` position at which the picker should be anchored
+     * Relative to the `AnchorTarget`'s position. */
     AnchoredX := 0
 
-    /** If anchored, the `Y` position at which the picker should be anchored. */
+    /** @property {Integer} AnchoredY If anchored, the `Y` position at which the picker should be anchored.
+     * Relative to the `AnchorTarget`'s position. */
     AnchoredY := 0
 
     ; Color Configuration. Press "i" to cycle between the two color sets.
@@ -395,7 +398,7 @@
                 DllCall("DeleteObject", "Ptr", hBitmap)
                 DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
 
-                if (this.OnUpdate != 0) and (this.OnUpdate is Func)
+                if this.OnUpdate is Func
                     this.OnUpdate.Call(this.Color)
             }
         }
@@ -646,9 +649,6 @@
                 zoomFactor := this.DefaultZoomFactor
                 captureSize := this.DefaultCaptureSize
 
-                this.PreviewXOffset := Round(captureSize / 2) + this.BorderWidth + 1
-                this.PreviewYOffset := Round(captureSize / 2) + this.BorderWidth + 1
-
                 if !KeyWait("0") or !KeyWait("Numpad0")
                     continue
             }
@@ -724,6 +724,12 @@
     picker := ColorPicker(True,, UpdateColors)
     picker.FontName := "Papyrus"
     picker.FontSize := 24
+    picker.AnchoredX := 50
+    picker.AnchoredY := 50
+    picker.Anchored := True
+    picker.CanUnanchor := True
+    picker.DefaultCaptureSize := 5
+    picker.DefaultZoomFactor := 12
     picker.OnExit := (color) => MsgBox(color.ToHex("Color selected: #{R}{G}{B}").Full)
 
     colorWheel.OnEvent("Click", (*) => picker.Start())
@@ -732,8 +738,7 @@
     {
         hex := color.ToHex("0x{B}{G}{R}")
 
-        picker.TextFGColors[1] := color
-        picker.TextFGColors[2] := color
+        picker.TextFGColor := color
 
         hex := color.ToHex("{R}{G}{B}")
         colorBox.Opt("+Redraw +Background" hex.Full)
