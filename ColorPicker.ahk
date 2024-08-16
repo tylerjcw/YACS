@@ -191,7 +191,7 @@
 
     /**
      * Starts the current instance of `ColorPicker`.
-     * @returns {Boolean | Object} The `Color` object if a color was chosen, `False` otherwise.
+     * @returns {Boolean | Color} The `Color` object if a color was chosen, `False` otherwise.
      */
     Start()
     {
@@ -561,7 +561,7 @@
                 else
                     MouseMove(-1, 0, 0, "R")
 
-                if !KeyWait("Left", "T0.05") or !KeyWait("Numpad4", "T0.05")
+                if !KeyWait("Left", "T0.10") or !KeyWait("Numpad4", "T0.10")
                     continue
             }
 
@@ -573,7 +573,7 @@
                 else
                     MouseMove(1, 0, 0, "R")
 
-                if !KeyWait("Right", "T0.05") or !KeyWait("Numpad6", "T0.05")
+                if !KeyWait("Right", "T0.10") or !KeyWait("Numpad6", "T0.10")
                     continue
             }
 
@@ -585,7 +585,7 @@
                 else
                     MouseMove(0, -1, 0, "R")
 
-                if !KeyWait("Up", "T0.05") or !KeyWait("Numpad8", "T0.05")
+                if !KeyWait("Up", "T0.10") or !KeyWait("Numpad8", "T0.10")
                     continue
             }
 
@@ -597,7 +597,7 @@
                 else
                     MouseMove(0, 1, 0, "R")
 
-                if !KeyWait("Down", "T0.05") or !KeyWait("Numpad2", "T0.05")
+                if !KeyWait("Down", "T0.10") or !KeyWait("Numpad2", "T0.10")
                     continue
             }
 
@@ -697,7 +697,7 @@
     }
 }
 
-;/** Place a ";" at the beginning of this line to test the color picker
+/** Place a ";" at the beginning of this line to test the color picker
 #c::
 {
     mainWindow := Gui()
