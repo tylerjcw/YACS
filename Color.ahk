@@ -111,7 +111,7 @@ class Color
     {
         get
         {
-            hbb := this._hwbFormat
+            hwb := this._hwbFormat
             hwb := RegExReplace(hwb, "{1:d}", "{H}")
             hwb := RegExReplace(hwb, "{2:d}", "{W}")
             hwb := RegExReplace(hwb, "{3:d}", "{B}")
