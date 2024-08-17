@@ -40,17 +40,45 @@ class Color
     /** @property {String} HexFormat The hexadecimal color code format for `Color.ToHex().Full` (e.g. `#{R}{G}{B}{A}`). */
     HexFormat
     {
-        get => RegExReplace(this._hexFormat, "{(\d):02X}", (m) => "{" . SubStr("RGBA", m[1], 1) . "}")
-        set => this._hexFormat := RegExReplace(value, "i){(R|G|B|A)}", (m) => "{" . InStr("RGBA", m[1]) . ":02X}")
+        get
+        {
+            hex := this._hexFormat
+            hex := RegExReplace(hex, "{4:02X}", "{A}")
+            hex := RegExReplace(hex, "{1:02X}", "{R}")
+            hex := RegExReplace(hex, "{2:02X}", "{G}")
+            hex := RegExReplace(hex, "{3:02X}", "{B}")
+            return hex
+        }
+
+        set
+        {
+            value := RegExReplace(value, "{A}", "{4:02X}")
+            value := RegExReplace(value, "{R}", "{1:02X}")
+            value := RegExReplace(value, "{G}", "{2:02X}")
+            value := RegExReplace(value, "{B}", "{3:02X}")
+            this._hexFormat := value
+        }
     }
 
     /** @property {String} RGBFormat The RGB color code format for `Color.ToRGB().Full` (e.g. `RGBA({R},{G},{B},{A})`). */
     RGBFormat
     {
-        get => RegExReplace(this._rgbFormat, "{(\d):d}", (m) => "{" . SubStr("RGBA", m[1], 1) . "}")
+        get
+        {
+            rgb := this._rgbFormat
+            rgb := RegExReplace(rgb, "{1:d}", "{R}")
+            rgb := RegExReplace(rgb, "{2:d}", "{G}")
+            rgb := RegExReplace(rgb, "{3:d}", "{B}")
+            rgb := RegExReplace(rgb, "{4:d}", "{A}")
+            return rgb
+        }
         set
         {
-            this._rgbFormat := RegExReplace(value, "i){(R|G|B|A)}", (m) => "{" . InStr("RGBA", m[1]) . ":d}")
+            value := RegExReplace(value, "{R}", "{1:d}")
+            value := RegExReplace(value, "{G}", "{2:d}")
+            value := RegExReplace(value, "{B}", "{3:d}")
+            value := RegExReplace(value, "{A}", "{4:d}")
+            this._rgbFormat := value
             this.Full := Format(this._rgbFormat, this.R, this.G, this.B, this.A)
         }
     }
@@ -58,29 +86,86 @@ class Color
     /** @property {String} HSLFormat The HSL color code format for `Color.ToHSL().Full` (e.g. `hsl({H},{S}%,{L}%)`). */
     HSLFormat
     {
-        get => RegExReplace(this._hslFormat, "{(\d):d}", (m) => "{" . SubStr("HSLA", m[1], 1) . "}")
-        set => this._hslFormat := RegExReplace(value, "i){(H|S|L|A)}", (m) => "{" . InStr("HSLA", m[1]) . ":d}")
+        get
+        {
+            hsl := this._hslFormat
+            hsl := RegExReplace(hsl, "{1:d}", "{H}")
+            hsl := RegExReplace(hsl, "{2:d}", "{S}")
+            hsl := RegExReplace(hsl, "{3:d}", "{L}")
+            hsl := RegExReplace(hsl, "{4:d}", "{A}")
+            return hsl
+        }
+
+        set
+        {
+            value := RegExReplace(value, "{H}", "{1:d}")
+            value := RegExReplace(value, "{S}", "{2:d}")
+            value := RegExReplace(value, "{L}", "{3:d}")
+            value := RegExReplace(value, "{A}", "{4:d}")
+            this._hslFormat := value
+        }
     }
 
     /** @property {String} HWBFormat The HWB color code format for `Color.ToHWB().Full` (e.g. `hwb({H},{W}%,{B}%)`). */
     HWBFormat
     {
-        get => RegExReplace(this._hwbFormat, "{(\d):d}", (m) => "{" . SubStr("HWB", m[1], 1) . "}")
-        set => this._hwbFormat := RegExReplace(value, "i){(H|W|B)}", (m) => "{" . InStr("HWB", m[1]) . ":d}")
+        get
+        {
+            hwb := RegExReplace(hwb, "{1:d}", "{H}")
+            hwb := RegExReplace(hwb, "{2:d}", "{W}")
+            hwb := RegExReplace(hwb, "{3:d}", "{B}")
+            return hwb
+        }
+        
+        set
+        {
+            value := RegExReplace(value, "{H}", "{1:d}")
+            value := RegExReplace(value, "{W}", "{2:d}")
+            value := RegExReplace(value, "{B}", "{3:d}")
+            this._hwbFormat := value
+        }
     }
 
     /** @property {String} CMYKFormat The CMYK color code format for `Color.ToCMYK().Full` (e.g. `cmyk({C}%,{M}%,{Y}%,{K}%)`). */
     CMYKFormat
     {
-        get => RegExReplace(this._cmykFormat, "{(\d):d}", (m) => "{" . SubStr("CMYK", m[1], 1) . "}")
-        set => this._cmykFormat := RegExReplace(value, "i){(C|M|Y|K)}", (m) => "{" . InStr("CMYK", m[1]) . ":d}")
+        get
+        {
+            cmyk := RegExReplace(cmyk, "{1:d}", "{C}")
+            cmyk := RegExReplace(cmyk, "{2:d}", "{M}")
+            cmyk := RegExReplace(cmyk, "{3:d}", "{Y}")
+            cmyk := RegExReplace(cmyk, "{4:d}", "{K}")
+            return cmyk
+        }
+        
+        set
+        {
+            value := RegExReplace(value, "{C}", "{1:d}")
+            value := RegExReplace(value, "{M}", "{2:d}")
+            value := RegExReplace(value, "{Y}", "{3:d}")
+            value := RegExReplace(value, "{K}", "{4:d}")
+            this._cmykFormat := value
+        }
     }
 
     /** @property {String} NColFormat The NCol color code format for `Color.ToNCol().Full` (e.g. `ncol({H},{W}%,{B}%)`). */
     NColFormat
     {
-        get => RegExReplace(this._nColFormat, "{(\d):(s|d)}", (m) => "{" . SubStr("HWB", m[1], 1) . "}")
-        set => this._nColFormat := RegExReplace(value, "i){(H|W|B)}", (m) => "{" . InStr("HWB", m[1]) . ":" . (m[1] = "H" ? "s" : "d") . "}")
+        get
+        {
+            ncol := RegExReplace(ncol, "{1:d}", "{H}")
+            ncol := RegExReplace(ncol, "{2:d}", "{W}")
+            ncol := RegExReplace(ncol, "{3:d}", "{B}")
+            return ncol
+        }
+
+        set
+        {
+            value := RegExReplace(value, "{H}", "{1:s}")
+            value := RegExReplace(value, "{W}", "{2:d}")
+            value := RegExReplace(value, "{B}", "{3:d}")
+            this._nColFormat := value
+        }
     }
 
     ; Default Format Strings
@@ -90,6 +175,23 @@ class Color
     _hwbFormat  := "hwb({1:d} {2:d}% {3:d}%)"
     _cmykFormat := "cmyk({1:d}%, {2:d}%, {3:d}%, {4:d}%)"
     _nColFormat := "ncol({1:s}, {2:d}%, {3:d}%)"
+
+    static Black   => Color("Black")
+    static Silver  => Color("Silver")
+    static Gray    => Color("Gray")
+    static White   => Color("White")
+    static Maroon  => Color("Maroon")
+    static Red     => Color("Red")
+    static Purple  => Color("Purple")
+    static Fuchsia => Color("Fuchsia")
+    static Green   => Color("Green")
+    static Lime    => Color("Lime")
+    static Olive   => Color("Olive")
+    static Yellow  => Color("Yellow")
+    static Navy    => Color("Navy")
+    static Blue    => Color("Blue")
+    static Teal    => Color("Teal")
+    static Aqua    => Color("Aqua")
 
     /**
      * Color constructor
@@ -130,10 +232,10 @@ class Color
             }
             else if StrLen(hex) == 4
             {
-                this.R := Integer("0x" . SubStr(hex, 1, 1))
-                this.G := Integer("0x" . SubStr(hex, 2, 1))
-                this.B := Integer("0x" . SubStr(hex, 3, 1))
-                this.A := Integer("0x" . SubStr(hex, 4, 1))
+                this.R := Integer("0x" . SubStr(hex, 2, 1))
+                this.G := Integer("0x" . SubStr(hex, 3, 1))
+                this.B := Integer("0x" . SubStr(hex, 4, 1))
+                this.A := Integer("0x" . SubStr(hex, 1, 1))
             }
             else if StrLen(hex) == 6
             {
@@ -143,10 +245,10 @@ class Color
             }
             else if StrLen(hex) == 8
             {
-                this.R := Integer("0x" . SubStr(hex, 1, 2))
-                this.G := Integer("0x" . SubStr(hex, 3, 2))
-                this.B := Integer("0x" . SubStr(hex, 5, 2))
-                this.A := Integer("0x" . SubStr(hex, 7, 2))
+                this.R := Integer("0x" . SubStr(hex, 3, 2))
+                this.G := Integer("0x" . SubStr(hex, 5, 2))
+                this.B := Integer("0x" . SubStr(hex, 7, 2))
+                this.A := Integer("0x" . SubStr(hex, 1, 2))
             }
         }
         else if (colorArgs.Length == 3)
@@ -745,12 +847,7 @@ class Color
      * Returns the complementary color to the current `Color` instance.
      * @returns {Color}
      */
-    Complement()
-    {
-        hsl := this.ToHSL()
-        newH := Mod(hsl.H + 180, 360)
-        return Color.FromHSL(newH, hsl.S, hsl.L)
-    }
+    Complement() => this.ShiftHue(180)
 
     /**
      * Returns the luminance (`0-1`) of the current `Color` instance.
@@ -864,3 +961,228 @@ class Color
         return gradient
     }
 }
+
+/**
+#Requires AutoHotKey v2.0
+#Include ColorPicker.ahk
+#Include Color.ahk
+
+TestGui := Gui()
+TestGui.Title := "Color Class Test"
+TestGui.Opt("+Resize")
+
+startColor := Color.Random()
+endColor   := Color.Random()
+
+CreateControls()
+UpdateControls()
+TestGui.Show()
+
+MsgBox("
+    (
+        This demonstration shows some of the Capabilities of the Color class.
+        Every individual box is displaying an instance of the Color class.
+
+        There are 149 boxes in total:
+        Single color operations, 70 boxes arranged in a grid (5x14).
+        There are also 20 boxes for Analogous colors
+        15 Boxes for Triadic colors
+        And 54 boxes for the gradient.
+    )")
+
+LaunchStartColorPicker(*)
+{
+    picker := ColorPicker(False,, UpdateStartColor)
+    picker.DefaultCaptureSize := 5
+    picker.DefaultZoomFactor := 12
+    picker.ViewMode := "crosshair"
+    picker.OnExit := ExitStartColor
+    picker.Start()
+}
+
+LaunchEndColorPicker(*)
+{
+    picker := ColorPicker(False,, UpdateEndColor)
+    picker.DefaultCaptureSize := 5
+    picker.DefaultZoomFactor := 12
+    picker.ViewMode := "crosshair"
+    picker.OnExit := ExitEndColor
+    picker.Start()
+}
+
+RandomizeColors(*)
+{
+        global startColor := Color.Random()
+        global endColor   := Color.Random()
+        UpdateControls()
+}
+
+UpdateStartColor(_color)
+{
+    global startColor := _color
+    UpdateTopRow()
+}
+
+UpdateEndColor(_color)
+{
+    global endColor := _color
+    UpdateTopRow()
+}
+
+ExitStartColor(_color)
+{
+    global startColor := _color
+    UpdateControls()
+}
+
+ExitEndColor(_color)
+{
+    global endColor := _color
+    UpdateControls()
+}
+
+CreateControls()
+{
+    global controls := Map()
+    
+    columnLabels := ["Start Color", "End Color", "Mixed Color", "Average Color", "Multiplied Color"]
+    columnX := [120, 240, 360, 480, 600]
+
+    TestGui.Add("Button", "x" columnX[1] " y10 w100", "Pick Start Color").OnEvent("Click", LaunchStartColorPicker)
+    TestGui.Add("Button", "x" columnX[2] " y10 w100", "Pick End Color").OnEvent("Click", LaunchEndColorPicker)
+    TestGui.Add("Button", "x" columnX[3] " y10 w100", "Randomize").OnEvent("Click", RandomizeColors)
+    
+    for i, label in columnLabels
+    {
+        TestGui.Add("Text", "x" columnX[i] " y50 w100 Center", label)
+        controls[label] := TestGui.Add("Progress", "x" columnX[i]+10 " y70 w20 h20")
+        controls[label "Text"] := TestGui.Add("Text", "x" columnX[i]+35 " y70 w80 h20 Left", "")
+    }
+    
+    colorProperties := ["Hex → RGB", "RGB → RGB", "HSL → RGB", "HWB → RGB", "CMYK → RGB", "NCol → RGB", "Invert", "Lighten", "Darken", "Saturate", "Desaturate", "Grayscale", "Complement"]
+    
+    for i, prop in colorProperties
+    {
+        y := 100 + (i - 1) * 30
+        TestGui.Add("Text", "x10 y" y " w100 Right", prop)
+
+        for j, label in columnLabels
+        {
+            controls[label prop] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y-2 " w20 h20")
+            controls[label prop "Text"] := TestGui.Add("Text", "x" columnX[j]+35 " y" y " w80 h20 Left", "")
+        }
+    }
+
+    ; Add Analogous and Triadic displays
+    y := 495
+    TestGui.Add("Text", "x10 y" y " w100 Right", "Analogous")
+    for j, label in columnLabels
+    {
+        controls[label "Analogous1"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y-5 " w20 h20")
+        controls[label "Analogous2"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y-5 " w20 h20")
+        controls[label "Analogous3"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y+15 " w20 h20")
+        controls[label "Analogous4"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y+15 " w20 h20")
+        controls[label "AnalogousText"] := TestGui.Add("Text" , "x" columnX[j]+5  " y" y+40 " w80 h20 Center")
+    }
+
+    y += 50
+    TestGui.Add("Text", "x10 y" y " w100 Right", "Triadic")
+    for j, label in columnLabels
+    {
+        controls[label "Triadic1"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y-5 " w20 h20")
+        controls[label "Triadic2"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y-5 " w20 h20")
+        controls[label "Triadic3"] := TestGui.Add("Progress", "x" columnX[j]+20 " y" y+15 " w20 h20")
+        controls[label "TriadicText"] := TestGui.Add("Text" , "x" columnX[j]+5  " y" y+40 " w80 h20 Center")
+    }
+
+    ; Gradient display
+    y += 50
+    TestGui.Add("Text", "x10 y" y " w100 Right", "Gradient")
+    Loop 54
+    {
+        controls["Gradient" A_Index] := TestGui.Add("Progress", "x" 120+(A_Index-1)*10 " y" y-5 " w10 h20")
+    }
+}
+
+UpdateTopRow()
+{
+    columnLabels := ["Start Color", "End Color", "Mixed Color", "Average Color", "Multiplied Color"]
+    colorColumns := [startColor, endColor, startColor.Mix(endColor), Color.Average(startColor, endColor), Color.Multiply(startColor, endColor)]
+    
+    for i, _color in colorColumns
+    {
+        UpdateColorDisplay(columnLabels[i], _color)
+    }
+}
+
+UpdateControls()
+{
+    mixedColor := startColor.Mix(endColor)
+    averageColor := Color.Average(startColor, endColor)
+    multipliedColor := Color.Multiply(startColor, endColor)
+
+    colorColumns := [startColor, endColor, mixedColor, averageColor, multipliedColor]
+    columnLabels := ["Start Color", "End Color", "Mixed Color", "Average Color", "Multiplied Color"]
+
+    for i, _color in colorColumns
+    {
+        UpdateColorDisplay(columnLabels[i], _color)
+        UpdateColorDisplay(columnLabels[i] "Hex → RGB", _color)
+        UpdateColorDisplay(columnLabels[i] "RGB → RGB", Color.FromRGB(_color.R, _color.G, _color.B))
+
+        hsl := _color.ToHSL()
+        UpdateColorDisplay(columnLabels[i] "HSL → RGB", Color.FromHSL(hsl.H, hsl.S, hsl.L))
+
+        hwb := _color.ToHWB()
+        UpdateColorDisplay(columnLabels[i] "HWB → RGB", Color.FromHWB(hwb.H, hwb.W, hwb.B))
+
+        cmyk := _color.ToCMYK()
+        UpdateColorDisplay(columnLabels[i] "CMYK → RGB", Color.FromCMYK(cmyk.C, cmyk.M, cmyk.Y, cmyk.K))
+
+        ncol := _color.ToNCol()
+        UpdateColorDisplay(columnLabels[i] "NCol → RGB", Color.FromNCol(ncol.H, ncol.W, ncol.B))
+        UpdateColorDisplay(columnLabels[i] "Invert", _color.Invert())
+        UpdateColorDisplay(columnLabels[i] "Lighten", _color.Lighten(20))
+        UpdateColorDisplay(columnLabels[i] "Darken", _color.Darken(20))
+        UpdateColorDisplay(columnLabels[i] "Saturate", _color.Saturate(20))
+        UpdateColorDisplay(columnLabels[i] "Desaturate", _color.Desaturate(20))
+        UpdateColorDisplay(columnLabels[i] "Grayscale", _color.Grayscale())
+        UpdateColorDisplay(columnLabels[i] "Complement", _color.Complement())
+    }
+
+    ; Update Analogous and Triadic displays
+    for i, _color in colorColumns
+    {
+        analogous := _color.Analogous(30, 4)
+        triadic := _color.Triadic()
+
+        UpdateColorDisplay(columnLabels[i] "Analogous1", analogous[1])
+        UpdateColorDisplay(columnLabels[i] "Analogous2", analogous[2])
+        UpdateColorDisplay(columnLabels[i] "Analogous3", analogous[3])
+        UpdateColorDisplay(columnLabels[i] "Analogous4", analogous[4])
+
+        UpdateColorDisplay(columnLabels[i] "Triadic1", triadic[1])
+        UpdateColorDisplay(columnLabels[i] "Triadic2", triadic[2])
+        UpdateColorDisplay(columnLabels[i] "Triadic3", triadic[3])
+    }
+
+    gradient := startColor.Gradient(endColor, 54)
+    Loop 54
+    {
+        hex := gradient[A_Index].ToHex("{R}{G}{B}").Full
+        controls["Gradient" A_Index].Opt("c" hex " Background" hex)
+    }
+}
+
+UpdateColorDisplay(label, _color)
+{
+    hex := _color.ToHex("{R}{G}{B}").Full
+    controls[label].Opt("c" hex " Background" hex)
+
+    if (controls.Has(label "Text"))
+    {
+        controls[label "Text"].Value := _color.ToHex("0x{R}{G}{B}").Full
+    }
+}
+
+TestGui.OnEvent("Close", (*) => ExitApp())
