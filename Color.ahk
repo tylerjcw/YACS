@@ -111,6 +111,7 @@ class Color
     {
         get
         {
+            hbb := this._hwbFormat
             hwb := RegExReplace(hwb, "{1:d}", "{H}")
             hwb := RegExReplace(hwb, "{2:d}", "{W}")
             hwb := RegExReplace(hwb, "{3:d}", "{B}")
@@ -131,6 +132,7 @@ class Color
     {
         get
         {
+            cmyk := this._cmykFormat
             cmyk := RegExReplace(cmyk, "{1:d}", "{C}")
             cmyk := RegExReplace(cmyk, "{2:d}", "{M}")
             cmyk := RegExReplace(cmyk, "{3:d}", "{Y}")
@@ -153,6 +155,7 @@ class Color
     {
         get
         {
+            ncol := this._nColFormat
             ncol := RegExReplace(ncol, "{1:d}", "{H}")
             ncol := RegExReplace(ncol, "{2:d}", "{W}")
             ncol := RegExReplace(ncol, "{3:d}", "{B}")
