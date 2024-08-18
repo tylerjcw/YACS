@@ -54,8 +54,8 @@ ncol   := Color.FromNCol("R15", 13, 0)
 MsgBox("This MsgBox shows the inaccuracies of the `"From*`" methods.`nAll of these were converted from the same color.`nResults will vary by color.`n`nFrom: rgb(255, 66, 32, 255)`n`nRGB: " rgb.Full "`nHex: " hex.Full "`nHSL: " hsl.Full "`nHWB: " hwb.Full "`nCMYK: " cmyk.Full "`nNcol: " ncol.Full, "Color.From*() Methods")
 
 picker := ColorPicker(False)
-picker.OnUpdate := UpdateColors
-picker.OnExit   := ColorChosen
+picker.OnUpdate := _UpdateColors
+picker.OnExit   := _ColorChosen
 picker.FontName := "Consolas"
 picker.FontSize := 24
 picker.TextFGColors := [ Color("4F0110"), Color("6390DD") ]
@@ -63,7 +63,7 @@ picker.BorderColors := [ Color("0x4F0110"), Color("#6390DD") ]
 
 colorBox.OnEvent("Click", (*) => picker.Start())
 
-UpdateColors(colorObj)
+_UpdateColors(colorObj)
 {
     hex := colorObj.ToHex("{R}{G}{B}")
     colorBox.Opt("+Redraw +Background" hex.Full)
@@ -71,7 +71,7 @@ UpdateColors(colorObj)
     picker.TextFGColor := colorObj.Invert()
 }
 
-ColorChosen(colorObj)
+_ColorChosen(colorObj)
 {
     ;RGB
     colorObj.RGBFormat := "{R}, {G}, {B}"
