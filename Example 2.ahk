@@ -9,6 +9,16 @@ TestGui.Opt("+Resize")
 startColor := Color("0xFF234567")
 endColor   := Color.Random()
 
+;Pre-Generate the Pulse Gradient
+pulseGradient := Color.Red.Gradient(300, Color.Green, Color.Red)
+for i, col in pulseGradient
+    pulseGradient[i] := col.ToHex("{R}{G}{B}").Full
+SetTimer(PulseBar, 1000)
+
+;Set variable for hue shift pulse
+hueShift := 0
+SetTimer(PulseHue, 10)
+
 CreateControls()
 UpdateControls()
 TestGui.Show()
@@ -24,6 +34,21 @@ MsgBox("
         15 Boxes for Triadic colors
         And 54 boxes for the gradient.
     )")
+
+PulseBar(*)
+{
+    for col in pulseGradient
+    {
+        controls["Pulse"].Opt("Background" col)
+        Sleep(5)
+    }
+}
+
+PulseHue(*)
+{
+    global hueShift := Mod(hueShift + 1, 360)
+    controls["HuePulse"].Opt("Background" Color.FromHSL(hueShift, 50, 50).ToHex("{R}{G}{B}").Full)
+}
 
 LaunchStartColorPicker(*)
 {
@@ -83,9 +108,11 @@ CreateControls()
     columnLabels := ["Start Color", "End Color", "Mixed Color", "Average Color", "Multiplied Color"]
     columnX := [120, 240, 360, 480, 600]
 
-    TestGui.Add("Button", "x" columnX[1] " y10 w100", "Pick Start Color").OnEvent("Click", LaunchStartColorPicker)
-    TestGui.Add("Button", "x" columnX[2] " y10 w100", "Pick End Color").OnEvent("Click", LaunchEndColorPicker)
-    TestGui.Add("Button", "x" columnX[3] " y10 w100", "Randomize").OnEvent("Click", RandomizeColors)
+    TestGui.Add("Button"  , "x" columnX[1] " y10 w100", "Pick Start Color").OnEvent("Click", LaunchStartColorPicker)
+    TestGui.Add("Button"  , "x" columnX[2] " y10 w100", "Pick End Color").OnEvent("Click", LaunchEndColorPicker)
+    TestGui.Add("Button"  , "x" columnX[3] " y10 w100", "Randomize").OnEvent("Click", RandomizeColors)
+    controls["Pulse"] := TestGui.Add("Progress", "x" columnX[4] " y10 w100 h22")
+    controls["HuePulse"] := TestGui.Add("Progress", "x" columnX[5] " y10 w100 h22")
     
     for i, label in columnLabels
     {
