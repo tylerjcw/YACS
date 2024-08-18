@@ -9,15 +9,15 @@ TestGui.Opt("+Resize")
 startColor := Color("0xFF234567")
 endColor   := Color.Random()
 
-;Pre-Generate the Pulse Gradient
+; Pre-Generate the Pulse Gradient, we'll make it from red, to green, and back to red
 pulseGradient := Color.Red.Gradient(300, Color.Green, Color.Red)
 for i, col in pulseGradient
     pulseGradient[i] := col.ToHex("{R}{G}{B}").Full ; convert every Color in the array into a hex string formatted for use with Progress control
-SetTimer(PulseBar, 1000)
+SetTimer(PulseBar, 1000) ; Start the pulse timer
 
-;Set variable for hue shift pulse
+; Set variable for hue shift pulse, we'll add one to it and loop it back to zero when it hits 360, giving a rainbow effect
 hueShift := 0
-SetTimer(PulseHue, 10)
+SetTimer(PulseHue, 10) ; set the hue shift pulse timer
 
 CreateControls()
 UpdateControls()
@@ -40,7 +40,7 @@ PulseBar(*)
     for col in pulseGradient
     {
         controls["Pulse"].Opt("Background" col)
-        Sleep(5)
+        Sleep(1)
     }
 }
 
