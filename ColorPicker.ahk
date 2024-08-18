@@ -137,7 +137,7 @@
     OnExit := 0
 
     /** @property {Integer} `0` or `1` to select between the two color sets. */
-    ColorSet := 0
+    ColorSet := 1
 
     /** @property {Color} TextFGColor Gets or Sets the currently selected color set's Text Foreground Color */
     TextFGColor
