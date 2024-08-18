@@ -201,7 +201,7 @@ UpdateControls()
         UpdateColorDisplay(columnLabels[i] "Triadic3", triadic[3])
     }
 
-    gradient := startColor.Gradient(endColor, 54)
+    gradient := startColor.Gradient(54, Color.Random(), Color.Random(), Color.Random(), endColor)
     Loop 54
     {
         hex := gradient[A_Index].ToHex("{R}{G}{B}").Full

@@ -1178,24 +1178,60 @@ class Color
     }
 
     /**
-     * Produces a gradient from the current `Color` instance to another `Color` instance.
-     * @param endColor The other color in the gradient.
-     * @param {Integer} steps How many colors in-between should be made?
+     * Produces a gradient from the current `Color` instance to any number of other color instances.
+     * Gradient order is defined by the order the colors are supplied in. The current Color instance
+     * is always the first color.
+     * @param {Integer} [steps=10] How many colors in-between should be made?
+     * @param {Color...} colors The colors to interpolate between. Must be: `2 <= colors.Length <= steps`
      * @returns {Color[]}
      */
-    Gradient(endColor, steps := 10)
+    Gradient(steps := 10, colors*)
     {
+        colors.InsertAt(1, this)
         gradient := []
-        gradient.Push(this)
-        
-        Loop steps - 1
+        totalColors := colors.Length
+    
+        if (totalColors < 2)
         {
-            weight := A_Index / steps
-            gradient.Push(this.Mix(endColor, weight * 100))
+            throw Error("At least two colors are required for a gradient.")
         }
-        
-        gradient.Push(endColor)
-        
+
+        if (totalColors > steps)
+        {
+            throw Error("More colors provided than steps. Please provide equal or fewer colors than steps.")
+        }
+
+        segmentSteps := Floor(steps / (totalColors - 1))
+
+        Loop totalColors - 1
+        {
+            startColor := colors[A_Index]
+
+            try
+                endColor := colors[A_Index + 1]
+            catch
+                endColor := colors[totalColors]  ; Use the last color if we've run out
+
+            Loop segmentSteps
+            {
+                weight := (A_Index - 1) / segmentSteps
+                gradient.Push(startColor.Mix(endColor, weight * 100))
+            }
+        }
+
+        ; Add the last color
+        gradient.Push(colors[totalColors])
+
+        ; Trim or extend to match the exact number of steps
+        while (gradient.Length > steps)
+        {
+            gradient.Pop()
+        }
+        while (gradient.Length < steps)
+        {
+            gradient.Push(colors[totalColors])
+        }
+
         return gradient
     }
 }
