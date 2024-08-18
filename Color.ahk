@@ -3,7 +3,7 @@
 /**
  *  Color.ahk
  *
- *  @version 1.0
+ *  @version 1.2
  *  @author Komrad Toast (komrad.toast@hotmail.com)
  *  @see https://www.autohotkey.com/boards/viewtopic.php?f=83&t=132433
  *  @license
@@ -27,12 +27,13 @@
  * 
  * Has methods to convert to / from other formats (Hex, HSL, HWB, CMYK, NCol).
  * ```ahk2
+ * Color("Fuschia")        ; AutoHotKey color names
  * Color("#27D")           ; #RGB
- * Color("#27DF")          ; #RGBA
+ * Color("#27DF")          ; #ARGB
  * Color("#2277DD")        ; #RRGGBB
- * Color("#2277DDFF")      ; #RRGGBBAA
- * Color(22, 77, 221)      ; RGB
- * Color(22, 77, 221, 255) ; RGBA
+ * Color("#2277DDFF")      ; #AARRGGBB
+ * Color(22, 77, 221)      ; R, G, B
+ * Color(22, 77, 221, 255) ; R, G, B, A
  * ```
  */
 class Color
@@ -52,10 +53,10 @@ class Color
 
         set
         {
-            value := RegExReplace(value, "{A}", "{4:02X}")
-            value := RegExReplace(value, "{R}", "{1:02X}")
-            value := RegExReplace(value, "{G}", "{2:02X}")
-            value := RegExReplace(value, "{B}", "{3:02X}")
+            value := RegExReplace(value, "im){A}", "{4:02X}")
+            value := RegExReplace(value, "im){R}", "{1:02X}")
+            value := RegExReplace(value, "im){G}", "{2:02X}")
+            value := RegExReplace(value, "im){B}", "{3:02X}")
             this._hexFormat := value
         }
     }
@@ -74,10 +75,10 @@ class Color
         }
         set
         {
-            value := RegExReplace(value, "{R}", "{1:d}")
-            value := RegExReplace(value, "{G}", "{2:d}")
-            value := RegExReplace(value, "{B}", "{3:d}")
-            value := RegExReplace(value, "{A}", "{4:d}")
+            value := RegExReplace(value, "im){R}", "{1:d}")
+            value := RegExReplace(value, "im){G}", "{2:d}")
+            value := RegExReplace(value, "im){B}", "{3:d}")
+            value := RegExReplace(value, "im){A}", "{4:d}")
             this._rgbFormat := value
             this.Full := Format(this._rgbFormat, this.R, this.G, this.B, this.A)
         }
@@ -98,10 +99,10 @@ class Color
 
         set
         {
-            value := RegExReplace(value, "{H}", "{1:d}")
-            value := RegExReplace(value, "{S}", "{2:d}")
-            value := RegExReplace(value, "{L}", "{3:d}")
-            value := RegExReplace(value, "{A}", "{4:d}")
+            value := RegExReplace(value, "im){H}", "{1:d}")
+            value := RegExReplace(value, "im){S}", "{2:d}")
+            value := RegExReplace(value, "im){L}", "{3:d}")
+            value := RegExReplace(value, "im){A}", "{4:d}")
             this._hslFormat := value
         }
     }
@@ -120,9 +121,9 @@ class Color
         
         set
         {
-            value := RegExReplace(value, "{H}", "{1:d}")
-            value := RegExReplace(value, "{W}", "{2:d}")
-            value := RegExReplace(value, "{B}", "{3:d}")
+            value := RegExReplace(value, "im){H}", "{1:d}")
+            value := RegExReplace(value, "im){W}", "{2:d}")
+            value := RegExReplace(value, "im){B}", "{3:d}")
             this._hwbFormat := value
         }
     }
@@ -142,10 +143,10 @@ class Color
         
         set
         {
-            value := RegExReplace(value, "{C}", "{1:d}")
-            value := RegExReplace(value, "{M}", "{2:d}")
-            value := RegExReplace(value, "{Y}", "{3:d}")
-            value := RegExReplace(value, "{K}", "{4:d}")
+            value := RegExReplace(value, "im){C}", "{1:d}")
+            value := RegExReplace(value, "im){M}", "{2:d}")
+            value := RegExReplace(value, "im){Y}", "{3:d}")
+            value := RegExReplace(value, "im){K}", "{4:d}")
             this._cmykFormat := value
         }
     }
@@ -164,10 +165,62 @@ class Color
 
         set
         {
-            value := RegExReplace(value, "{H}", "{1:s}")
-            value := RegExReplace(value, "{W}", "{2:d}")
-            value := RegExReplace(value, "{B}", "{3:d}")
+            value := RegExReplace(value, "im){H}", "{1:s}")
+            value := RegExReplace(value, "im){W}", "{2:d}")
+            value := RegExReplace(value, "im){B}", "{3:d}")
             this._nColFormat := value
+        }
+    }
+
+    /** @property {String} XYZFormat The XYZ color code format for `Color.ToXYZ().Full` (e.g. `xyz({X},{Y},{Z})`).
+     * To change the amount of decimal places, just add it after the channel: `{X:2}` would round the `X` Channel to 2 decimal places.
+     */
+    XYZFormat
+    {
+        get
+        {
+            xyz := this._xyzFormat
+            xyz := RegExReplace(xyz, "{1(:0.[0-9]+f)?}", "{X}")
+            xyz := RegExReplace(xyz, "{2(:0.[0-9]+f)?}", "{Y}")
+            xyz := RegExReplace(xyz, "{3(:0.[0-9]+f)?}", "{Z}")
+            return xyz
+        }
+
+        set
+        {
+            value := RegExReplace(value, "im){X:(\d+)}", "{1:0.$1f}")
+            value := RegExReplace(value, "im){Y:(\d+)}", "{2:0.$1f}")
+            value := RegExReplace(value, "im){Z:(\d+)}", "{3:0.$1f}")
+            value := RegExReplace(value, "im){X}", "{1:f}")
+            value := RegExReplace(value, "im){Y}", "{2:f}")
+            value := RegExReplace(value, "im){Z}", "{3:f}")
+            this._xyzFormat := value
+        }
+    }
+
+    /** @property {String} LabFormat The Lab color code format for `Color.ToLab().Full` (e.g. `lab({L},{a},{b})`).
+     * To change the amount of decimal places, just add it after the channel: `{L:2}` would round the `L` Channel to 2 decimal places.
+     */
+    LabFormat
+    {
+        get
+        {
+            lab := this._labFormat
+            lab := RegExReplace(lab, "{1(:0.[0-9]+f)?}", "{L}")
+            lab := RegExReplace(lab, "{2(:0.[0-9]+f)?}", "{a}")
+            lab := RegExReplace(lab, "{3(:0.[0-9]+f)?}", "{b}")
+            return lab
+        }
+
+        set
+        {
+            value := RegExReplace(value, "im){L:(\d+)}", "{1:0.$1f}")
+            value := RegExReplace(value, "im){A:(\d+)}", "{2:0.$1f}")
+            value := RegExReplace(value, "im){B:(\d+)}", "{3:0.$1f}")
+            value := RegExReplace(value, "im){L}", "{1:f}")
+            value := RegExReplace(value, "im){A}", "{2:f}")
+            value := RegExReplace(value, "im){B}", "{3:f}")
+            this._labFormat := value
         }
     }
 
@@ -178,6 +231,8 @@ class Color
     _hwbFormat  := "hwb({1:d} {2:d}% {3:d}%)"
     _cmykFormat := "cmyk({1:d}%, {2:d}%, {3:d}%, {4:d}%)"
     _nColFormat := "ncol({1:s}, {2:d}%, {3:d}%)"
+    _xyzFormat  := "xyz({1:0.2f}, {2:0.2f}, {3:0.2f})"
+    _labFormat  := "lab({1:0.2f}, {2:0.2f}, {3:0.2f})"
 
     static Black   => Color("Black")
     static Silver  => Color("Silver")
@@ -498,6 +553,96 @@ class Color
     }
 
     /**
+     * Converts the stored color to XYZ representation.
+     * @param {String} formatString The string used to format the output.
+     * @returns {Object} `{"X":(0-100), "Y":(0-100), "Z":(0-100), "Full":string}`
+     * ___
+     * @credit Iseahound
+     */
+    ToXYZ(formatString := "")
+    {
+        if formatString
+        {
+            oldFormat := this.XYZFormat
+            this.XYZFormat := formatString
+        }
+
+        RGB := Map(0, this.R,
+                1, this.G,
+                2, this.B)
+
+        for i, C in RGB
+        {
+            C := C / 255
+            RGB[i] := (C > 0.04045) ? (((C + 0.055) / 1.055)**2.4) : (C / 12.92)
+        }
+
+        x    := 100 * (0.4124564*RGB[0] + 0.3575761*RGB[1] + 0.1804375*RGB[2])
+        y    := 100 * (0.2126729*RGB[0] + 0.7151522*RGB[1] + 0.0721750*RGB[2])
+        z    := 100 * (0.0193339*RGB[0] + 0.1191920*RGB[1] + 0.9503041*RGB[2])
+        full := Format(this._xyzFormat, x, y, z)
+
+        if formatString
+            this.XYZFormat := oldFormat
+
+        return {
+            X: x,
+            Y: y,
+            Z: z,
+            Full: full
+        }
+    }
+
+    /**
+     * Converts the stored color to Lab representation.
+     * @param {String} formatString The string used to format the output.
+     * @returns {Object} `{"L":(0 - 100), "a":(-100 - +100), "b":(-100 - +100), "Full":string}`
+     * ___
+     * @credit Iseahound
+     */
+    ToLab(formatString := "")
+    {
+        if formatString
+        {
+            oldFormat := this.LabFormat
+            this.LabFormat := formatString
+        }
+
+        _xyz := this.ToXYZ()
+        XYZ := Map(0, _xyz.X,
+                   1, _xyz.Y,
+                   2, _xyz.Z)
+
+        D65 := Map(0, 95.047,
+                   1, 100.000, ;Reference white, 6500K, Blue Sky at Noon
+                   2, 108.883)
+ 
+        e := (6/29)**3
+        k := (24389/27)
+ 
+        for i, c in XYZ
+            XYZ[i] := XYZ[i] / D65[i] ;Find Relative Color values based on D65
+
+        for i, c in XYZ
+            XYZ[i] := (c > e) ? (c**(1/3)) : (((k * c) + 16) / 116) ;Lab Function, no anonymous functions :(
+ 
+        l := 116 *  XYZ[1] - 16
+        a := 500 * (XYZ[0] - XYZ[1])
+        b := 200 * (XYZ[1] - XYZ[2])
+        full := Format(this._labFormat, l, a, b)
+
+        if formatString
+            this.LabFormat := oldFormat
+ 
+        return {
+            L: l,
+            a: a,
+            b: b,
+            Full: full
+        }
+    }
+
+    /**
      * Generates a random color.
      * @returns {Color} A new, random color
      */
@@ -537,10 +682,10 @@ class Color
         }
         else if StrLen(hex) == 4
         {
-            R := Integer("0x" . SubStr(hex, 1, 1))
-            G := Integer("0x" . SubStr(hex, 2, 1))
-            B := Integer("0x" . SubStr(hex, 3, 1))
-            A := Integer("0x" . SubStr(hex, 4, 1))
+            R := Integer("0x" . SubStr(hex, 2, 1))
+            G := Integer("0x" . SubStr(hex, 3, 1))
+            B := Integer("0x" . SubStr(hex, 4, 1))
+            A := Integer("0x" . SubStr(hex, 1, 1))
         }
         else if StrLen(hex) == 6
         {
@@ -551,10 +696,10 @@ class Color
         }
         else if StrLen(hex) == 8
         {
-            R := Integer("0x" . SubStr(hex, 1, 2))
-            G := Integer("0x" . SubStr(hex, 3, 2))
-            B := Integer("0x" . SubStr(hex, 5, 2))
-            A := Integer("0x" . SubStr(hex, 7, 2))
+            R := Integer("0x" . SubStr(hex, 3, 2))
+            G := Integer("0x" . SubStr(hex, 5, 2))
+            B := Integer("0x" . SubStr(hex, 7, 2))
+            A := Integer("0x" . SubStr(hex, 1, 2))
         }
 
         return Color(R, G, B, A)
@@ -562,9 +707,9 @@ class Color
 
     /**
      * Creates a `Color` instance from HSL format.
-     * @param {Integer} h Hue        - `0-360`
-     * @param {Integer} s Saturation - `0-100`
-     * @param {Integer} l Lightness  - `0-100`
+     * @param {Integer} h Hue        - `0 to 360`
+     * @param {Integer} s Saturation - `0 to 100`
+     * @param {Integer} l Lightness  - `0 to 100`
      * @returns {Color}
      */
     static FromHSL(h, s, l)
@@ -608,9 +753,9 @@ class Color
 
     /**
      * Creates a `Color` instance from HWB format.
-     * @param {Integer} h Hue       - `0-360`
-     * @param {Integer} w Whiteness - `0-100`
-     * @param {Integer} b Blackness - `0-100`
+     * @param {Integer} h Hue       - `0 to 360`
+     * @param {Integer} w Whiteness - `0 to 100`
+     * @param {Integer} b Blackness - `0 to 100`
      * @returns {Color}
      */
     static FromHWB(h, w, b)
@@ -654,10 +799,10 @@ class Color
 
     /**
      * Creates a `Color` instance from CMYK format.
-     * @param {Integer} c Cyan        - `0-100`
-     * @param {Integer} m Magenta     - `0-100`
-     * @param {Integer} y Yellow      - `0-100`
-     * @param {Integer} k Key (Black) - `0-100`
+     * @param {Integer} c Cyan        - `0 to 100`
+     * @param {Integer} m Magenta     - `0 to 100`
+     * @param {Integer} y Yellow      - `0 to 100`
+     * @param {Integer} k Key (Black) - `0 to 100`
      * @returns {Color}
      */
     static FromCMYK(c, m, y, k)
@@ -679,8 +824,8 @@ class Color
     /**
      * Creates a `Color` instance from NCol format.
      * @param {Integer} h Hue       - `(R|Y|G|C|B|M)0-100`
-     * @param {Integer} w Whiteness - `0-100`
-     * @param {Integer} b Blackness - `0-100`
+     * @param {Integer} w Whiteness - `0 to 100`
+     * @param {Integer} b Blackness - `0 to 100`
      * @returns {Color}
      */
     static FromNCol(h, w, b)
@@ -696,6 +841,78 @@ class Color
         return Color.FromHWB(h, w, b)
 
         Clamp(val, low, high) => Min(Max(val, low), high)
+    }
+
+    /**
+     * Creates a `Color` instance from XYZ format.
+     * @param {Integer} x X Component - `0 - ~95.047`
+     * @param {Integer} y Y Component - `0 - 100`
+     * @param {Integer} z Z Component - `0 - ~108.883`
+     * @returns {Color}
+     */
+    static FromXYZ(x, y, z)
+    {
+        ; Normalize the inputs
+        x := x / 100
+        y := y / 100
+        z := z / 100
+
+        ; XYZ to RGB conversion matrix
+        matrix := [
+            [3.2404542, -1.5371385, -0.4985314],
+            [-0.9692660, 1.8760108, 0.0415560],
+            [0.0556434, -0.2040259, 1.0572252]
+        ]
+
+        ; Apply the matrix transformation
+        r := x * matrix[1][1] + y * matrix[1][2] + z * matrix[1][3]
+        G := x * matrix[2][1] + y * matrix[2][2] + z * matrix[2][3]
+        B := x * matrix[3][1] + y * matrix[3][2] + z * matrix[3][3]
+
+        ; Apply gamma correction
+        r := (r > 0.0031308) ? (1.055 * (r ** (1/2.4)) - 0.055) : 12.92 * r
+        G := (G > 0.0031308) ? (1.055 * (G ** (1/2.4)) - 0.055) : 12.92 * G
+        B := (B > 0.0031308) ? (1.055 * (B ** (1/2.4)) - 0.055) : 12.92 * B
+
+        ; Clamp values to [0, 1] range
+        r := Max(0, Min(1, r))
+        G := Max(0, Min(1, G))
+        B := Max(0, Min(1, B))
+
+        ; Convert to 8-bit color values
+        r := Round(r * 255)
+        G := Round(G * 255)
+        B := Round(B * 255)
+
+        ; Create and return a new Color object
+        return Color(r, G, B)
+    }
+
+    /**
+     * Creates a `Color` instance from Lab format.
+     * @param {Number} L - Lightness component (0 to 100)
+     * @param {Number} a - a component (-100 to +100)
+     * @param {Number} b - b component (-100 to +100)
+     * @returns {Color}
+     */
+    static FromLab(L, a, b)
+    {
+        ; Lab to XYZ conversion
+        fy := (L + 16) / 116
+        fx := a / 500 + fy
+        fz := fy - b / 200
+
+        ; Reference white point (D65)
+        Xn := 95.047
+        Yn := 100.0
+        Zn := 108.883
+
+        X := Xn * (fx > 0.206893034 ? fx * fx * fx : (fx - 16 / 116) / 7.787)
+        Y := Yn * (fy > 0.206893034 ? fy * fy * fy : (fy - 16 / 116) / 7.787)
+        Z := Zn * (fz > 0.206893034 ? fz * fz * fz : (fz - 16 / 116) / 7.787)
+
+        ; Use the existing FromXYZ method to convert to RGB
+        return Color.FromXYZ(X, Y, Z)
     }
 
     /**
@@ -748,19 +965,37 @@ class Color
     Invert() => Color(255 - this.R, 255 - this.G, 255 - this.B, this.A)
 
     /**
-     * Returns the grayscale representation of the current color.
+     * Returns the Rec. 601 grayscale representation of the current color.
      * @returns {Color}
+     * 
+     * ___
+     * @credit Iseahound
      */
     Grayscale()
     {
-        luminance := 0.299 * this.R + 0.587 * this.G + 0.114 * this.B
-        grayValue := Round(luminance)
-        return Color(grayValue, grayValue, grayValue)
-    }
+        sRGB := this.ToHex("0x{R}{G}{B}").Full
+        static rY := 0.212655
+        static gY := 0.715158
+        static bY := 0.072187
+     
+        c1 := 255 & ( sRGB >> 16 )
+        c2 := 255 & ( sRGB >> 8 )
+        c3 := 255 & ( sRGB )
+     
+        Loop 3 {
+           c%A_Index% := c%A_Index% / 255
+           c%A_Index% := (c%A_Index% <= 0.04045) ? c%A_Index%/12.92 : ((c%A_Index%+0.055)/(1.055))**2.4
+        }
+     
+        v := rY*c1 + gY*c2 + bY*c3
+        v := (v <= 0.0031308) ? v * 12.92 : 1.055*(v**(1.0/2.4))-0.055
+        g := Round(v*255)
+        return Color(g, g, g)
+     }
 
     /**
      * Shifts the current color's hue by the specified amount of degrees.
-     * @param {Integer} degrees The amount to shift the hue by - `0-360`.
+     * @param {Integer} degrees The amount to shift the hue by - `0 to 360`.
      * @returns {Color}
      */
     ShiftHue(degrees)
@@ -772,7 +1007,7 @@ class Color
 
     /**
      * Shifts the current color's saturation by the specified amount.
-     * @param {Integer} degrees The amount to shift the saturation by - `0-100`.
+     * @param {Integer} degrees The amount to shift the saturation by - `0 to 100`.
      * @returns {Color}
      */
     ShiftSaturation(amount)
@@ -784,21 +1019,21 @@ class Color
 
     /**
      * Increases the current color's saturation by the specified amount. Negative values are made positive.
-     * @param {Integer} percentage The amount to increase the saturation by - `0-100`.
+     * @param {Integer} percentage The amount to increase the saturation by - `0 to 100`.
      * @returns {Color}
      */
     Saturate(percentage)   => this.ShiftSaturation( Abs(percentage))
 
     /**
      * Decreases the current color's saturation by the specified amount. Positive values are made negative.
-     * @param {Integer} percentage The amount to decrease the saturation by - `0-100`.
+     * @param {Integer} percentage The amount to decrease the saturation by - `0 to 100`.
      * @returns {Color}
      */
     Desaturate(percentage) => this.ShiftSaturation(-Abs(percentage))
 
     /**
      * Shifts the current color's lightness by the specified amount.
-     * @param {Integer} degrees The amount to shift the lightness by - `0-100`.
+     * @param {Integer} degrees The amount to shift the lightness by - `0 to 100`.
      * @returns {Color}
      */
     ShiftLightness(amount)
@@ -810,21 +1045,21 @@ class Color
 
     /**
      * Increases the current color's lightness by the specified amount. Negative values are made positive.
-     * @param {Integer} percentage The amount to increase the lightness by - `0-100`.
+     * @param {Integer} percentage The amount to increase the lightness by - `0 to 100`.
      * @returns {Color}
      */
     Lighten(percentage) => this.ShiftLightness( Abs(percentage))
 
     /**
      * Decreases the current color's lightness by the specified amount. Positive values are made negative.
-     * @param {Integer} percentage The amount to decrease the lightness by - `0-100`.
+     * @param {Integer} percentage The amount to decrease the lightness by - `0 to 100`.
      * @returns {Color}
      */
     Darken(percentage)  => this.ShiftLightness(-Abs(percentage))
 
     /**
      * Shifts the current color's whiteness by the specified amount.
-     * @param {Integer} degrees The amount to shift the whiteness by - `0-100`.
+     * @param {Integer} degrees The amount to shift the whiteness by - `0 to 100`.
      * @returns {Color}
      */
     ShiftWhiteness(amount)
@@ -836,7 +1071,7 @@ class Color
 
     /**
      * Shifts the current color's blackness by the specified amount.
-     * @param {Integer} degrees The amount to shift the blackness by - `0-100`.
+     * @param {Integer} degrees The amount to shift the blackness by - `0 to 100`.
      * @returns {Color}
      */
     ShiftBlackness(amount)
@@ -853,7 +1088,7 @@ class Color
     Complement() => this.ShiftHue(180)
 
     /**
-     * Returns the luminance (`0-1`) of the current `Color` instance.
+     * Returns the luminance (`0 to 1`) of the current `Color` instance.
      * @returns {Float}
      */
     GetLuminance()
@@ -964,228 +1199,3 @@ class Color
         return gradient
     }
 }
-
-/**
-#Requires AutoHotKey v2.0
-#Include ColorPicker.ahk
-#Include Color.ahk
-
-TestGui := Gui()
-TestGui.Title := "Color Class Test"
-TestGui.Opt("+Resize")
-
-startColor := Color.Random()
-endColor   := Color.Random()
-
-CreateControls()
-UpdateControls()
-TestGui.Show()
-
-MsgBox("
-    (
-        This demonstration shows some of the Capabilities of the Color class.
-        Every individual box is displaying an instance of the Color class.
-
-        There are 149 boxes in total:
-        Single color operations, 70 boxes arranged in a grid (5x14).
-        There are also 20 boxes for Analogous colors
-        15 Boxes for Triadic colors
-        And 54 boxes for the gradient.
-    )")
-
-LaunchStartColorPicker(*)
-{
-    picker := ColorPicker(False,, UpdateStartColor)
-    picker.DefaultCaptureSize := 5
-    picker.DefaultZoomFactor := 12
-    picker.ViewMode := "crosshair"
-    picker.OnExit := ExitStartColor
-    picker.Start()
-}
-
-LaunchEndColorPicker(*)
-{
-    picker := ColorPicker(False,, UpdateEndColor)
-    picker.DefaultCaptureSize := 5
-    picker.DefaultZoomFactor := 12
-    picker.ViewMode := "crosshair"
-    picker.OnExit := ExitEndColor
-    picker.Start()
-}
-
-RandomizeColors(*)
-{
-        global startColor := Color.Random()
-        global endColor   := Color.Random()
-        UpdateControls()
-}
-
-UpdateStartColor(_color)
-{
-    global startColor := _color
-    UpdateTopRow()
-}
-
-UpdateEndColor(_color)
-{
-    global endColor := _color
-    UpdateTopRow()
-}
-
-ExitStartColor(_color)
-{
-    global startColor := _color
-    UpdateControls()
-}
-
-ExitEndColor(_color)
-{
-    global endColor := _color
-    UpdateControls()
-}
-
-CreateControls()
-{
-    global controls := Map()
-    
-    columnLabels := ["Start Color", "End Color", "Mixed Color", "Average Color", "Multiplied Color"]
-    columnX := [120, 240, 360, 480, 600]
-
-    TestGui.Add("Button", "x" columnX[1] " y10 w100", "Pick Start Color").OnEvent("Click", LaunchStartColorPicker)
-    TestGui.Add("Button", "x" columnX[2] " y10 w100", "Pick End Color").OnEvent("Click", LaunchEndColorPicker)
-    TestGui.Add("Button", "x" columnX[3] " y10 w100", "Randomize").OnEvent("Click", RandomizeColors)
-    
-    for i, label in columnLabels
-    {
-        TestGui.Add("Text", "x" columnX[i] " y50 w100 Center", label)
-        controls[label] := TestGui.Add("Progress", "x" columnX[i]+10 " y70 w20 h20")
-        controls[label "Text"] := TestGui.Add("Text", "x" columnX[i]+35 " y70 w80 h20 Left", "")
-    }
-    
-    colorProperties := ["Hex → RGB", "RGB → RGB", "HSL → RGB", "HWB → RGB", "CMYK → RGB", "NCol → RGB", "Invert", "Lighten", "Darken", "Saturate", "Desaturate", "Grayscale", "Complement"]
-    
-    for i, prop in colorProperties
-    {
-        y := 100 + (i - 1) * 30
-        TestGui.Add("Text", "x10 y" y " w100 Right", prop)
-
-        for j, label in columnLabels
-        {
-            controls[label prop] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y-2 " w20 h20")
-            controls[label prop "Text"] := TestGui.Add("Text", "x" columnX[j]+35 " y" y " w80 h20 Left", "")
-        }
-    }
-
-    ; Add Analogous and Triadic displays
-    y := 495
-    TestGui.Add("Text", "x10 y" y " w100 Right", "Analogous")
-    for j, label in columnLabels
-    {
-        controls[label "Analogous1"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y-5 " w20 h20")
-        controls[label "Analogous2"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y-5 " w20 h20")
-        controls[label "Analogous3"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y+15 " w20 h20")
-        controls[label "Analogous4"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y+15 " w20 h20")
-        controls[label "AnalogousText"] := TestGui.Add("Text" , "x" columnX[j]+5  " y" y+40 " w80 h20 Center")
-    }
-
-    y += 50
-    TestGui.Add("Text", "x10 y" y " w100 Right", "Triadic")
-    for j, label in columnLabels
-    {
-        controls[label "Triadic1"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y-5 " w20 h20")
-        controls[label "Triadic2"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y-5 " w20 h20")
-        controls[label "Triadic3"] := TestGui.Add("Progress", "x" columnX[j]+20 " y" y+15 " w20 h20")
-        controls[label "TriadicText"] := TestGui.Add("Text" , "x" columnX[j]+5  " y" y+40 " w80 h20 Center")
-    }
-
-    ; Gradient display
-    y += 50
-    TestGui.Add("Text", "x10 y" y " w100 Right", "Gradient")
-    Loop 54
-    {
-        controls["Gradient" A_Index] := TestGui.Add("Progress", "x" 120+(A_Index-1)*10 " y" y-5 " w10 h20")
-    }
-}
-
-UpdateTopRow()
-{
-    columnLabels := ["Start Color", "End Color", "Mixed Color", "Average Color", "Multiplied Color"]
-    colorColumns := [startColor, endColor, startColor.Mix(endColor), Color.Average(startColor, endColor), Color.Multiply(startColor, endColor)]
-    
-    for i, _color in colorColumns
-    {
-        UpdateColorDisplay(columnLabels[i], _color)
-    }
-}
-
-UpdateControls()
-{
-    mixedColor := startColor.Mix(endColor)
-    averageColor := Color.Average(startColor, endColor)
-    multipliedColor := Color.Multiply(startColor, endColor)
-
-    colorColumns := [startColor, endColor, mixedColor, averageColor, multipliedColor]
-    columnLabels := ["Start Color", "End Color", "Mixed Color", "Average Color", "Multiplied Color"]
-
-    for i, _color in colorColumns
-    {
-        UpdateColorDisplay(columnLabels[i], _color)
-        UpdateColorDisplay(columnLabels[i] "Hex → RGB", _color)
-        UpdateColorDisplay(columnLabels[i] "RGB → RGB", Color.FromRGB(_color.R, _color.G, _color.B))
-
-        hsl := _color.ToHSL()
-        UpdateColorDisplay(columnLabels[i] "HSL → RGB", Color.FromHSL(hsl.H, hsl.S, hsl.L))
-
-        hwb := _color.ToHWB()
-        UpdateColorDisplay(columnLabels[i] "HWB → RGB", Color.FromHWB(hwb.H, hwb.W, hwb.B))
-
-        cmyk := _color.ToCMYK()
-        UpdateColorDisplay(columnLabels[i] "CMYK → RGB", Color.FromCMYK(cmyk.C, cmyk.M, cmyk.Y, cmyk.K))
-
-        ncol := _color.ToNCol()
-        UpdateColorDisplay(columnLabels[i] "NCol → RGB", Color.FromNCol(ncol.H, ncol.W, ncol.B))
-        UpdateColorDisplay(columnLabels[i] "Invert", _color.Invert())
-        UpdateColorDisplay(columnLabels[i] "Lighten", _color.Lighten(20))
-        UpdateColorDisplay(columnLabels[i] "Darken", _color.Darken(20))
-        UpdateColorDisplay(columnLabels[i] "Saturate", _color.Saturate(20))
-        UpdateColorDisplay(columnLabels[i] "Desaturate", _color.Desaturate(20))
-        UpdateColorDisplay(columnLabels[i] "Grayscale", _color.Grayscale())
-        UpdateColorDisplay(columnLabels[i] "Complement", _color.Complement())
-    }
-
-    ; Update Analogous and Triadic displays
-    for i, _color in colorColumns
-    {
-        analogous := _color.Analogous(30, 4)
-        triadic := _color.Triadic()
-
-        UpdateColorDisplay(columnLabels[i] "Analogous1", analogous[1])
-        UpdateColorDisplay(columnLabels[i] "Analogous2", analogous[2])
-        UpdateColorDisplay(columnLabels[i] "Analogous3", analogous[3])
-        UpdateColorDisplay(columnLabels[i] "Analogous4", analogous[4])
-
-        UpdateColorDisplay(columnLabels[i] "Triadic1", triadic[1])
-        UpdateColorDisplay(columnLabels[i] "Triadic2", triadic[2])
-        UpdateColorDisplay(columnLabels[i] "Triadic3", triadic[3])
-    }
-
-    gradient := startColor.Gradient(endColor, 54)
-    Loop 54
-    {
-        hex := gradient[A_Index].ToHex("{R}{G}{B}").Full
-        controls["Gradient" A_Index].Opt("c" hex " Background" hex)
-    }
-}
-
-UpdateColorDisplay(label, _color)
-{
-    hex := _color.ToHex("{R}{G}{B}").Full
-    controls[label].Opt("c" hex " Background" hex)
-
-    if (controls.Has(label "Text"))
-    {
-        controls[label "Text"].Value := _color.ToHex("0x{R}{G}{B}").Full
-    }
-}
-
-TestGui.OnEvent("Close", (*) => ExitApp())
