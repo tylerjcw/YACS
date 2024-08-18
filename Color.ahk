@@ -1184,7 +1184,7 @@ class Color
      * ___
      * @param {Integer} [steps=10] How many steps for the ENTIRE gradient. This will be divided by the
      * number of colors to determine the number of steps between each color.
-     * @param {Color...} colors The colors to interpolate between. Must be: `2 <= colors.Length <= steps`
+     * @param {Color...} colors The colors to interpolate between. Must be: `1 <= colors.Length <= steps`
      * ___
      * @returns {Color[]}
      */
