@@ -23,10 +23,17 @@
 **/
 
 /**
- * Color class. Stores a decimal RGB color representation. 
- * 
- * Has methods to convert to / from other formats (Hex, HSL, HWB, CMYK, NCol).
- * ```ahk2
+ * Color class. Stores a decimal RGB color representation.
+ * ___
+ * @constructor ```Color(colorArgs*)```
+ * ___
+ * @param colorArgs - Color arguments to initialize the color from.
+ * - Can be RGB, Hex, or Color Name.
+ * - Hex is in the format `RGB`, `ARGB`, `RRGGBB` or `AARRGGBB`. `0x` and `#` are optional.
+ * - RGB is in the format `R, G, B` or `R, G, B, A`.
+ * - Color Name can be any of the standard AHK color names.
+ * ___
+ * @example
  * Color("Fuschia")        ; AutoHotKey color names
  * Color("#27D")           ; #RGB
  * Color("#27DF")          ; #ARGB
@@ -34,8 +41,7 @@
  * Color("#2277DDFF")      ; #AARRGGBB
  * Color(22, 77, 221)      ; R, G, B
  * Color(22, 77, 221, 255) ; R, G, B, A
- * ```
- */
+**/
 class Color
 {
     /** @property {String} HexFormat The hexadecimal color code format for `Color.ToHex().Full` (e.g. `#{R}{G}{B}{A}`). */
@@ -252,8 +258,22 @@ class Color
     static Aqua    => Color("Aqua")
 
     /**
-     * Color constructor
-     * @param colorArgs - Color arguments to initialize the color from. Can be RGB, RGBA, Hex (3, 4, 6, or 8 character), or Name.
+     * @constructor Creates a new `Color` instance from the given color arguments
+     * ___
+     * @param colorArgs - Color arguments to initialize the color from.
+     * - Can be RGB, Hex, or Color Name.
+     * - Hex is in the format `RGB`, `ARGB`, `RRGGBB` or `AARRGGBB`. `0x` and `#` are optional.
+     * - RGB is in the format `R, G, B` or `R, G, B, A`.
+     * - Color Name can be any of the standard AHK color names.
+     * ___
+     * @example
+     * Color("Fuschia")        ; AutoHotKey color names
+     * Color("#27D")           ; #RGB
+     * Color("#27DF")          ; #ARGB
+     * Color("#2277DD")        ; #RRGGBB
+     * Color("#2277DDFF")      ; #AARRGGBB
+     * Color(22, 77, 221)      ; R, G, B
+     * Color(22, 77, 221, 255) ; R, G, B, A
      */
     __New(colorArgs*)
     {
@@ -334,7 +354,9 @@ class Color
 
     /**
      * Converts the stored color to Hexadecimal representation.
+     * ___
      * @param {String} formatString The string used to format the output.
+     * ___
      * @returns {Object} `{R:(00-FF), G:(00-FF), B:(00-FF), A:(00-FF), Full:string}`
      */
     ToHex(formatString := "")
@@ -361,7 +383,9 @@ class Color
 
     /**
      * Converts the stored color to HSLA representation.
+     * ___
      * @param {String} formatString The string used to format the output.
+     * ___
      * @returns {Object} `{H:(0-360), S:(0-100), L:(0-100), A:(0-1), Full:string}`
      */
     ToHSL(formatString := "")
@@ -419,10 +443,9 @@ class Color
 
     /**
      * Converts the stored color to HWB representation.
-     * ```ahk2
-     * color.ToHWB("HWB: {H}, {W}%, {B}%")
-     * ```
+     * ___
      * @param {String} formatString The string used to format the `Full` output.
+     * ___
      * @returns {Object} `{H:(0-360), W:(0-100), B:(0-100), Full:string}`
      */
     ToHWB(formatString := "")
@@ -471,7 +494,9 @@ class Color
 
     /**
      * Converts the stored color to CMYK representation.
+     * ___
      * @param {String} formatString The string used to format the output.
+     * ___
      * @returns {Object} `{C:(0-100), M:(0-100), Y:(0-100), K:(0-100), Full:string}`
      */
     ToCMYK(formatString := "")
@@ -517,7 +542,9 @@ class Color
 
     /**
      * Converts the stored color to NCol representation.
+     * ___
      * @param {String} formatString The string used to format the output.
+     * ___
      * @returns {Object} `{"H":string, "W":(0-100), "B":(0-100), "Full":string}`
      */
     ToNCol(formatString := "")
@@ -554,7 +581,9 @@ class Color
 
     /**
      * Converts the stored color to XYZ representation.
+     * ___
      * @param {String} formatString The string used to format the output.
+     * ___
      * @returns {Object} `{"X":(0-100), "Y":(0-100), "Z":(0-100), "Full":string}`
      * ___
      * @credit Iseahound
@@ -595,7 +624,9 @@ class Color
 
     /**
      * Converts the stored color to Lab representation.
+     * ___
      * @param {String} formatString The string used to format the output.
+     * ___
      * @returns {Object} `{"L":(0 - 100), "a":(-100 - +100), "b":(-100 - +100), "Full":string}`
      * ___
      * @credit Iseahound
@@ -644,12 +675,14 @@ class Color
 
     /**
      * Generates a random color.
-     * @returns {Color} A new, random color
+     * ___
+     * @returns {Color}
      */
     static Random() => Color(Random(255), Random(255), Random(255))
 
     /**
      * Syntactic Sugar for the Color Constructor. Makes a new color using RGB or RGBA representation.
+     * ___
      * @returns {Color}
      */
     static FromRGB(colorArgs*) ; Syntactic Sugar
@@ -663,7 +696,8 @@ class Color
     }
 
     /**
-     * Syntactic Sugar for the Color Constructor. Makes a new color using Hex RGB or RGBA representation.
+     * Syntactic Sugar for the Color Constructor. Makes a new color using Hex RGB or ARGB representation.
+     * ___
      * @returns {Color}
      */
     static FromHex(hex) ; Syntactic Sugar
@@ -707,9 +741,11 @@ class Color
 
     /**
      * Creates a `Color` instance from HSL format.
+     * ___
      * @param {Integer} h Hue        - `0 to 360`
      * @param {Integer} s Saturation - `0 to 100`
      * @param {Integer} l Lightness  - `0 to 100`
+     * ___
      * @returns {Color}
      */
     static FromHSL(h, s, l)
@@ -753,9 +789,11 @@ class Color
 
     /**
      * Creates a `Color` instance from HWB format.
+     * ___
      * @param {Integer} h Hue       - `0 to 360`
      * @param {Integer} w Whiteness - `0 to 100`
      * @param {Integer} b Blackness - `0 to 100`
+     * ___
      * @returns {Color}
      */
     static FromHWB(h, w, b)
@@ -799,10 +837,12 @@ class Color
 
     /**
      * Creates a `Color` instance from CMYK format.
+     * ___
      * @param {Integer} c Cyan        - `0 to 100`
      * @param {Integer} m Magenta     - `0 to 100`
      * @param {Integer} y Yellow      - `0 to 100`
      * @param {Integer} k Key (Black) - `0 to 100`
+     * ___
      * @returns {Color}
      */
     static FromCMYK(c, m, y, k)
@@ -823,9 +863,11 @@ class Color
 
     /**
      * Creates a `Color` instance from NCol format.
+     * ___
      * @param {Integer} h Hue       - `(R|Y|G|C|B|M)0-100`
      * @param {Integer} w Whiteness - `0 to 100`
      * @param {Integer} b Blackness - `0 to 100`
+     * ___
      * @returns {Color}
      */
     static FromNCol(h, w, b)
@@ -845,9 +887,11 @@ class Color
 
     /**
      * Creates a `Color` instance from XYZ format.
+     * ___
      * @param {Integer} x X Component - `0 - ~95.047`
      * @param {Integer} y Y Component - `0 - 100`
      * @param {Integer} z Z Component - `0 - ~108.883`
+     * ___
      * @returns {Color}
      */
     static FromXYZ(x, y, z)
@@ -890,9 +934,11 @@ class Color
 
     /**
      * Creates a `Color` instance from Lab format.
+     * ___
      * @param {Number} L - Lightness component (0 to 100)
      * @param {Number} a - a component (-100 to +100)
      * @param {Number} b - b component (-100 to +100)
+     * ___
      * @returns {Color}
      */
     static FromLab(L, a, b)
@@ -917,7 +963,9 @@ class Color
 
     /**
      * Creates a new `Color` by calculating the average of two or more colors.
-     * @param {Color[]} colors The colors to calculate the average of.
+     * ___
+     * @param {Color...} colors The colors to calculate the average of.
+     * ___
      * @returns {Color}
      */
     static Average(colors*)
@@ -939,7 +987,9 @@ class Color
 
     /**
      * Creates a new `Color` by multiplying two or more colors.
+     * ___
      * @param colors The colors to multiply.
+     * ___
      * @returns {Color}
      */
     static Multiply(colors*)
@@ -960,12 +1010,14 @@ class Color
 
     /**
      * Inverts the current color and returns it as a new `Color` instance.
+     * ___
      * @returns {Color}
      */
     Invert() => Color(255 - this.R, 255 - this.G, 255 - this.B, this.A)
 
     /**
      * Returns the Rec. 601 grayscale representation of the current color.
+     * ___
      * @returns {Color}
      * 
      * ___
@@ -995,7 +1047,9 @@ class Color
 
     /**
      * Shifts the current color's hue by the specified amount of degrees.
+     * ___
      * @param {Integer} degrees The amount to shift the hue by - `0 to 360`.
+     * ___
      * @returns {Color}
      */
     ShiftHue(degrees)
@@ -1007,7 +1061,9 @@ class Color
 
     /**
      * Shifts the current color's saturation by the specified amount.
+     * ___
      * @param {Integer} degrees The amount to shift the saturation by - `0 to 100`.
+     * ___
      * @returns {Color}
      */
     ShiftSaturation(amount)
@@ -1019,21 +1075,27 @@ class Color
 
     /**
      * Increases the current color's saturation by the specified amount. Negative values are made positive.
+     * ___
      * @param {Integer} percentage The amount to increase the saturation by - `0 to 100`.
+     * ___
      * @returns {Color}
      */
     Saturate(percentage)   => this.ShiftSaturation( Abs(percentage))
 
     /**
      * Decreases the current color's saturation by the specified amount. Positive values are made negative.
+     * ___
      * @param {Integer} percentage The amount to decrease the saturation by - `0 to 100`.
+     * ___
      * @returns {Color}
      */
     Desaturate(percentage) => this.ShiftSaturation(-Abs(percentage))
 
     /**
      * Shifts the current color's lightness by the specified amount.
+     * ___
      * @param {Integer} degrees The amount to shift the lightness by - `0 to 100`.
+     * ___
      * @returns {Color}
      */
     ShiftLightness(amount)
@@ -1045,21 +1107,27 @@ class Color
 
     /**
      * Increases the current color's lightness by the specified amount. Negative values are made positive.
+     * ___
      * @param {Integer} percentage The amount to increase the lightness by - `0 to 100`.
+     * ___
      * @returns {Color}
      */
     Lighten(percentage) => this.ShiftLightness( Abs(percentage))
 
     /**
      * Decreases the current color's lightness by the specified amount. Positive values are made negative.
+     * ___
      * @param {Integer} percentage The amount to decrease the lightness by - `0 to 100`.
+     * ___
      * @returns {Color}
      */
     Darken(percentage)  => this.ShiftLightness(-Abs(percentage))
 
     /**
      * Shifts the current color's whiteness by the specified amount.
+     * ___
      * @param {Integer} degrees The amount to shift the whiteness by - `0 to 100`.
+     * ___
      * @returns {Color}
      */
     ShiftWhiteness(amount)
@@ -1071,7 +1139,9 @@ class Color
 
     /**
      * Shifts the current color's blackness by the specified amount.
+     * ___
      * @param {Integer} degrees The amount to shift the blackness by - `0 to 100`.
+     * ___
      * @returns {Color}
      */
     ShiftBlackness(amount)
@@ -1083,12 +1153,14 @@ class Color
 
     /**
      * Returns the complementary color to the current `Color` instance.
+     * ___
      * @returns {Color}
      */
     Complement() => this.ShiftHue(180)
 
     /**
      * Returns the luminance (`0 to 1`) of the current `Color` instance.
+     * ___
      * @returns {Float}
      */
     GetLuminance()
@@ -1107,13 +1179,16 @@ class Color
 
     /**
      * Returns `True` the current `Color` instance's Luminance is equal to or below `0.5`.
+     * ___
      * @returns {Boolean}
      */
     IsDark() => this.GetLuminance() <= 0.5
 
     /**
      * Gets the contrast ratio between the current `Color` instance and another.
+     * ___
      * @param {Color} _color The `Color` instance to compare to.
+     * ___
      * @returns {Float}
      */
     GetContrast(_color)
@@ -1129,8 +1204,10 @@ class Color
 
     /**
      * Mixes the current `Color` instance with another and returns a new `Color`.
+     * ___
      * @param {Color} _color The color to mix with.
      * @param {Integer} weight The weight used to mix the two colors.
+     * ___
      * @returns {Color}
      */
     Mix(_color, weight := 50)
@@ -1145,8 +1222,10 @@ class Color
 
     /**
      * Generates `count` colors that are analogous with (next to) the current color by `angle` degrees.
+     * ___
      * @param {Integer} angle The angle between the analogous colors.
      * @param {Integer} count Total colors to return (includes original).
+     * ___
      * @returns {Color[]}
      */
     Analogous(angle := 30, count := 3)
@@ -1166,6 +1245,7 @@ class Color
 
     /**
      * Generates a Triadic color scheme from the current color. Traidic colors are offset from the current by `120°` and `240°`.
+     * ___
      * @returns {Color[3]}
      */
     Triadic()
