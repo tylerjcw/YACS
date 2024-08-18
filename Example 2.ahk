@@ -12,7 +12,7 @@ endColor   := Color.Random()
 ;Pre-Generate the Pulse Gradient
 pulseGradient := Color.Red.Gradient(300, Color.Green, Color.Red)
 for i, col in pulseGradient
-    pulseGradient[i] := col.ToHex("{R}{G}{B}").Full
+    pulseGradient[i] := col.ToHex("{R}{G}{B}").Full ; convert every Color in the array into a hex string formatted for use with Progress control
 SetTimer(PulseBar, 1000)
 
 ;Set variable for hue shift pulse
@@ -46,8 +46,14 @@ PulseBar(*)
 
 PulseHue(*)
 {
+    ; Add one degree to the hue every iteration, looping back to 0 when we hit 360 degrees.
     global hueShift := Mod(hueShift + 1, 360)
-    controls["HuePulse"].Opt("Background" Color.FromHSL(hueShift, 50, 50).ToHex("{R}{G}{B}").Full)
+
+    ; Create the color from Hue, Saturation, and Lightness, then convert it to a formatted hex string
+    hex := Color.FromHSL(hueShift, 50, 50).ToHex("{R}{G}{B}").Full
+
+    ; Set the control's background color to the new hex value
+    controls["HuePulse"].Opt("Background" hex)
 }
 
 LaunchStartColorPicker(*)
