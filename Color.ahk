@@ -597,8 +597,8 @@ class Color
         }
 
         RGB := Map(0, this.R,
-                1, this.G,
-                2, this.B)
+                   1, this.G,
+                   2, this.B)
 
         for i, C in RGB
         {
