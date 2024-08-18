@@ -1181,8 +1181,11 @@ class Color
      * Produces a gradient from the current `Color` instance to any number of other color instances.
      * Gradient order is defined by the order the colors are supplied in. The current Color instance
      * is always the first color.
-     * @param {Integer} [steps=10] How many colors in-between should be made?
+     * ___
+     * @param {Integer} [steps=10] How many steps for the ENTIRE gradient. This will be divided by the
+     * number of colors to determine the number of steps between each color.
      * @param {Color...} colors The colors to interpolate between. Must be: `2 <= colors.Length <= steps`
+     * ___
      * @returns {Color[]}
      */
     Gradient(steps := 10, colors*)
