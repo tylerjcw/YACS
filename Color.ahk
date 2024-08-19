@@ -1324,6 +1324,32 @@ class Color
     }
 
     /**
+     * Generates a monochromatic color scheme based on the current color.
+     * ___
+     * @param {number} [count=5] - The number of colors to generate in the scheme.
+     * @param {number} [lightnessRange=15] - The percentage difference of lightness between each color.
+     * ___
+     * @returns {Color[]}
+     */
+    Monochromatic(count := 5, lightnessRange := 15)
+    {
+        lightnessRange := (lightnessRange * 2) / 100
+        hsl := this.ToHSL()
+        minLightness := Max(10, hsl.L - lightnessRange * 50)
+        maxLightness := Min(90, hsl.L + lightnessRange * 50)
+    
+        colors := []
+        step := (maxLightness - minLightness) / (count - 1)
+        Loop count
+        {
+            l := minLightness + (A_Index - 1) * step
+            newColor := Color.FromHSL(hsl.H, hsl.S, l)
+            colors.Push(newColor)
+        }
+        return colors
+    }
+
+    /**
      * Generates `count` colors that are analogous with (next to) the current color by `angle` degrees.
      * ___
      * @param {Integer} angle The angle between the analogous colors.
