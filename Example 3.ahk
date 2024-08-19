@@ -7,7 +7,8 @@
  * the color function syntax (eg: "rgb(123, 61, 93)", "ncol(B20, 40%, 5%)", "hsl(120, 70%, 50%)", etc...)
  * or using Hex (RGB, ARGB, RRGGBB, or AARRGGBB with or without "0x" or "#"), or you can use
  * RGB or RGBA ("R, G, B" or "R, G, B, A"). If the input is valid, it will convert it to all supported
- * formats of the Color class
+ * formats of the Color class. You can then click on any of the group boxes to copy the full color string
+ * to the clipboard.
  */
 
 MainGui := Gui()
@@ -61,6 +62,7 @@ for index, label in labels {
 picker := ColorPicker(False)
 picker.OnUpdate := (_col) => colorPreview.Opt("+Background" . _col.ToHex("{R}{G}{B}").Full)
 picker.OnExit := PickerExit
+PickerExit(Color.Black) ; Set up the initial color to display
 
 MainGui.Show()
 

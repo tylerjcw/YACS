@@ -13,15 +13,16 @@ endColor   := Color.Random()
 pulseGradient := Color.Red.Gradient(300, Color.Green, Color.Red)
 for i, col in pulseGradient
     pulseGradient[i] := col.ToHex("{R}{G}{B}").Full ; convert every Color in the array into a hex string formatted for use with Progress control
-SetTimer(PulseBar, 1000) ; Start the pulse timer
 
 ; Set variable for hue shift pulse, we'll add one to it and loop it back to zero when it hits 360, giving a rainbow effect
 hueShift := 0
-SetTimer(PulseHue, 10) ; set the hue shift pulse timer
 
 CreateControls()
 UpdateControls()
 TestGui.Show()
+
+SetTimer(PulseBar, 1000) ; Start the pulse timer
+SetTimer(PulseHue, 10) ; set the hue shift pulse timer
 
 MsgBox("
     (
