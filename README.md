@@ -92,31 +92,27 @@ YACS is a project that started out as just a small function of a few lines, to j
 
     1. **`HexFormat`**
 
-        - Default: `"0x{1:s}{2:s}{3:s}"`
+        - Default: `"#{R}{G}{B}"`
 
-        - `{1}`: Represents the `R` channel.
+        - `{R}`: Represents the `R` channel.
 
-        - `{2}`: Represents the `G` channel.
+        - `{G}`: Represents the `G` channel.
 
-        - `{3}`: Represents the `B` channel.
+        - `{B}`: Represents the `B` channel.
 
     2. **`RGBFormat`**
 
-        - Default: `"{1:u}, {2:u}, {3:u}"`
+        - Default: `"rgb({R}, {G}, {B})"`
 
-        - `{1}`: Represents the `R` channel.
+        - `{R}`: Represents the `R` channel.
 
-        - `{2}`: Represents the `G` channel.
+        - `{G}`: Represents the `G` channel.
 
-        - `{3}`: Represents the `B` channel.
+        - `{B}`: Represents the `B` channel.
 
 16. **`Color`**
 
-    - The output color object, contains keys for `Hex` and `RGB`, and each of those contains keys for `Full`, `R`, `G`, and `B`
-
-    - The format strings mentioned above are used to format each key.
-
-    - Structure: `{ Hex: {R:0, G:0, B:0, Full:0}, RGB: {R:0, G:0, B:0, Full:0 } }`
+    - The output `Color`, please refer to the `Color` class definition for more details.
 
 17. **`Clip`**
 
