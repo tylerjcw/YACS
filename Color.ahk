@@ -230,15 +230,39 @@ class Color
         }
     }
 
+    YIQFormat
+    {
+        get
+        {
+            yiq := this._yiqFormat
+            yiq := RegExReplace(yiq, "{1(:0.[0-9]+f)?}", "{Y}")
+            yiq := RegExReplace(yiq, "{2(:0.[0-9]+f)?}", "{I}")
+            yiq := RegExReplace(yiq, "{3(:0.[0-9]+f)?}", "{Q}")
+            return yiq
+        }
+
+        set
+        {
+            value := RegExReplace(value, "im){Y:(\d+)}", "{1:0.$1f}")
+            value := RegExReplace(value, "im){I:(\d+)}", "{2:0.$1f}")
+            value := RegExReplace(value, "im){Q:(\d+)}", "{3:0.$1f}")
+            value := RegExReplace(value, "im){Y}", "{1:f}")
+            value := RegExReplace(value, "im){I}", "{2:f}")
+            value := RegExReplace(value, "im){Q}", "{3:f}")
+            this._yiqFormat := value
+        }
+    }
+
     ; Default Format Strings
     _hexFormat  := "0x{1:02X}{2:02X}{3:02X}"
     _rgbFormat  := "rgba({1:d}, {2:d}, {3:d}, {4:d})"
     _hslFormat  := "hsl({1:d}, {2:d}%, {3:d}%)"
-    _hwbFormat  := "hwb({1:d} {2:d}% {3:d}%)"
+    _hwbFormat  := "hwb({1:d}, {2:d}%, {3:d}%)"
     _cmykFormat := "cmyk({1:d}%, {2:d}%, {3:d}%, {4:d}%)"
     _nColFormat := "ncol({1:s}, {2:d}%, {3:d}%)"
     _xyzFormat  := "xyz({1:0.2f}, {2:0.2f}, {3:0.2f})"
     _labFormat  := "lab({1:0.2f}, {2:0.2f}, {3:0.2f})"
+    _yiqFormat  := "yiq({1:0.2f}, {2:0.2f}, {3:0.2f})"
 
     static Black   => Color("Black")
     static Silver  => Color("Silver")
@@ -300,7 +324,7 @@ class Color
             else if (StrLen(colorArgs[1]) >= 3)
                 hex := RegExReplace(colorArgs[1], "^#|^0x", "")
             else
-                throw Error("Invalid Hex Color argument")
+                throw Error("Invalid Color argument")
 
             if StrLen(hex) == 3
             {
@@ -344,7 +368,7 @@ class Color
         }
         else
         {
-            throw Error("Invalid color arguments")
+            throw Error("Invalid Color arguments")
         }
 
         this.Full := Format(this._rgbFormat, this.R, this.G, this.B, this.A)
@@ -674,6 +698,49 @@ class Color
     }
 
     /**
+     * Converts the stored color to YIQ representation.
+     * ___
+     * @param {String} formatString The string used to format the output.
+     * ___
+     * @returns {Object}
+     * ```
+     * {
+     *     "Y":(0 to 1),
+     *     "I":(-0.5957 to +0.5957),
+     *     "Q":(-0.5226 to +0.5226),
+     *     "Full":string}
+     * }
+     * ```
+     */
+    ToYIQ(formatString := "")
+    {
+        if formatString
+        {
+            oldFormat := this.LabFormat
+            this.LabFormat := formatString
+        }
+
+        r := this.R / 255
+        g := this.G / 255
+        b := this.B / 255
+    
+        y := 0.299 * r + 0.587 * g + 0.114 * b
+        i := 0.596 * r - 0.275 * g - 0.321 * b
+        q := 0.212 * r - 0.523 * g + 0.311 * b
+        full := Format(this._yiqFormat, y, i, q)
+
+        if formatString
+            this.YIQFormat := oldFormat
+    
+        return {
+            Y: y,
+            I: i,
+            Q: q,
+            Full: full
+        }
+    }
+
+    /**
      * Generates a random color.
      * ___
      * @returns {Color}
@@ -962,6 +1029,29 @@ class Color
     }
 
     /**
+     * Creates a `Color` instance from YIQ format.
+     * ___
+     * @param {Number} Y - Luma component (0 to 1)
+     * @param {Number} I - Red-Cyan contrast (-0.5957 to +0.5957)
+     * @param {Number} b - Magenta-Green contrast (-0.5226 to +0.5226)
+     * ___
+     * @returns {Color}
+     */
+    static FromYIQ(y, i, q)
+    {
+        r := y + 0.956 * i + 0.619 * q
+        g := y - 0.272 * i - 0.647 * q
+        b := y - 1.106 * i + 1.703 * q
+    
+        r := Round(Max(0, Min(r * 255, 255)))
+        g := Round(Max(0, Min(g * 255, 255)))
+        b := Round(Max(0, Min(b * 255, 255)))
+    
+        return Color(r, g, b)
+    }
+    
+
+    /**
      * Creates a new `Color` by calculating the average of two or more colors.
      * ___
      * @param {Color...} colors The colors to calculate the average of.
@@ -1044,6 +1134,19 @@ class Color
         g := Round(v*255)
         return Color(g, g, g)
      }
+
+     Sepia()
+     {
+        r := this.R
+        g := this.G
+        b := this.B
+        
+        newR := Min(Round((r * 0.393) + (g * 0.769) + (b * 0.189)), 255)
+        newG := Min(Round((r * 0.349) + (g * 0.686) + (b * 0.168)), 255)
+        newB := Min(Round((r * 0.272) + (g * 0.534) + (b * 0.131)), 255)
+        
+        return Color(newR, newG, newB)
+    }
 
     /**
      * Shifts the current color's hue by the specified amount of degrees.

@@ -62,6 +62,7 @@ picker.TextFGColors := [ Color("4F0110"), Color("6390DD") ]
 picker.BorderColors := [ Color("0x4F0110"), Color("#6390DD") ]
 
 colorBox.OnEvent("Click", (*) => picker.Start())
+mainWindow.OnEvent("Close", (*) => ExitApp())
 
 _UpdateColors(colorObj)
 {

@@ -109,7 +109,7 @@ ExitEndColor(_color)
 
 CreateControls()
 {
-    global controls := Map() ;54B929
+    global controls := Map()
     
     columnLabels := ["Start Color", "End Color", "Mixed Color", "Average Color", "Multiplied Color"]
     columnX := [120, 240, 360, 480, 600]
