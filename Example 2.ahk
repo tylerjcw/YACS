@@ -31,7 +31,7 @@ MsgBox("
 
         There are 149 boxes in total:
         Single color operations, 70 boxes arranged in a grid (5x14).
-        There are also 20 boxes for Analogous colors
+        There are also 20 boxes for Tetradic colors
         15 Boxes for Triadic colors
         And 54 boxes for the gradient.
     )")
@@ -142,16 +142,16 @@ CreateControls()
         }
     }
 
-    ; Add Analogous and Triadic displays
+    ; Add Tetradic and Triadic displays
     y := 495
-    TestGui.Add("Text", "x10 y" y " w100 Right", "Analogous")
+    TestGui.Add("Text", "x10 y" y " w100 Right", "Tetradic")
     for j, label in columnLabels
     {
-        controls[label "Analogous1"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y-5 " w20 h20")
-        controls[label "Analogous2"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y-5 " w20 h20")
-        controls[label "Analogous3"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y+15 " w20 h20")
-        controls[label "Analogous4"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y+15 " w20 h20")
-        controls[label "AnalogousText"] := TestGui.Add("Text" , "x" columnX[j]+5  " y" y+40 " w80 h20 Center")
+        controls[label "Tetradic1"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y-5 " w20 h20")
+        controls[label "Tetradic2"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y-5 " w20 h20")
+        controls[label "Tetradic3"] := TestGui.Add("Progress", "x" columnX[j]+10 " y" y+15 " w20 h20")
+        controls[label "Tetradic4"] := TestGui.Add("Progress", "x" columnX[j]+30 " y" y+15 " w20 h20")
+        controls[label "TetradicText"] := TestGui.Add("Text" , "x" columnX[j]+5  " y" y+40 " w80 h20 Center")
     }
 
     y += 50
@@ -219,16 +219,16 @@ UpdateControls()
         UpdateColorDisplay(columnLabels[i] "Complement", _color.Complement())
     }
 
-    ; Update Analogous and Triadic displays
+    ; Update Tetradic and Triadic displays
     for i, _color in colorColumns
     {
-        analogous := _color.Analogous(30, 4)
         triadic := _color.Triadic()
+        tetradic := _color.Tetradic()
 
-        UpdateColorDisplay(columnLabels[i] "Analogous1", analogous[1])
-        UpdateColorDisplay(columnLabels[i] "Analogous2", analogous[2])
-        UpdateColorDisplay(columnLabels[i] "Analogous3", analogous[3])
-        UpdateColorDisplay(columnLabels[i] "Analogous4", analogous[4])
+        UpdateColorDisplay(columnLabels[i] "Tetradic1", tetradic[1])
+        UpdateColorDisplay(columnLabels[i] "Tetradic2", tetradic[2])
+        UpdateColorDisplay(columnLabels[i] "Tetradic3", tetradic[3])
+        UpdateColorDisplay(columnLabels[i] "Tetradic4", tetradic[4])
 
         UpdateColorDisplay(columnLabels[i] "Triadic1", triadic[1])
         UpdateColorDisplay(columnLabels[i] "Triadic2", triadic[2])

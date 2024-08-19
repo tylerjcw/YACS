@@ -1347,18 +1347,18 @@ class Color
     }
 
     /**
-     * Generates a Triadic color scheme from the current color. Traidic colors are offset from the current by `120°` and `240°`.
+     * Generates a Triadic color scheme from the current color. Triadic colors are offset from the current by `120°` and `240°`.
      * ___
      * @returns {Color[3]}
      */
-    Triadic()
-    {
-        hsl := this.ToHSL()
-        color2 := Color.FromHSL(Mod(hsl.H + 120, 360), hsl.S, hsl.L)
-        color3 := Color.FromHSL(Mod(hsl.H + 240, 360), hsl.S, hsl.L)
+    Triadic() => this.Analogous(120, 3)
 
-        return [this, color2, color3]
-    }
+    /**
+     * Generates a Tetradic color scheme from the current color. Tetradic colors are offset from the current by `90°`, `180°`, and `270°`.
+     * ___
+     * @returns {Color[4]}
+     */
+    Tetradic() => this.Analogous(90, 4)
 
     /**
      * Produces a gradient from the current `Color` instance to any number of other color instances.
