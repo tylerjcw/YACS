@@ -2,6 +2,14 @@
 #Include Color.ahk
 #Include ColorPicker.ahk
 
+/**
+ * This example will allow you to pick a color or type a color in using either
+ * the color function syntax (eg: "rgb(123, 61, 93)", "ncol(B20, 40%, 5%)", "hsl(120, 70%, 50%)", etc...)
+ * or using Hex (RGB, ARGB, RRGGBB, or AARRGGBB with or without "0x" or "#"), or you can use
+ * RGB or RGBA ("R, G, B" or "R, G, B, A"). If the input is valid, it will convert it to all supported
+ * formats of the Color class
+ */
+
 MainGui := Gui()
 MainGui.Title := "Color Converter"
 MainGui.SetFont("s10")
