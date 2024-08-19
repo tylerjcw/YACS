@@ -1,129 +1,208 @@
 #Requires AutoHotkey v2.0
+#Include Color.ahk
+#Include ColorPicker.ahk
 
-#requires AutoHotKey v2.0
-#include ColorPicker.ahk
+/**
+ * This example will allow you to pick a color or type a color in using either
+ * the color function syntax (eg: "rgb(123, 61, 93)", "ncol(B20, 40%, 5%)", "hsl(120, 70%, 50%)", etc...)
+ * or using Hex (RGB, ARGB, RRGGBB, or AARRGGBB with or without "0x" or "#"), or you can use
+ * RGB or RGBA ("R, G, B" or "R, G, B, A"). If the input is valid, it will convert it to all supported
+ * formats of the Color class. You can then click on any of the group boxes to copy the full color string
+ * to the clipboard.
+ */
 
-mainWindow := Gui( , "Color Converter")
-mainWindow.Show("w500 h345")
-mainWindow.SetFont("s8", "Lucida Console")
+MainGui := Gui()
+MainGui.Title := "Color Converter"
+MainGui.SetFont("s10")
 
-insText  := mainWindow.AddText("x10 y10 w480 Center", "Click below to select a color")
-colorBox := MainWindow.AddText("x10 y+5 w480 h64 Center +BackgroundBlack", "")
+MainGui.Add("Text", "x10 y10 w100", "Input Color:")
+inputEdit := MainGui.Add("Edit", "x10 y30 w200 vInputColor")
+inputEdit.SetFont("s10", "Consolas")
+pickBtn    := MainGui.Add("Button", "x10 y+7 w200", "Pick Color")
+convertBtn := MainGui.Add("Button", "x220 y10 w80 h80", "Convert")
+colorPreview := MainGui.Add("Progress", "x310 y10 w320 h80 +Background000000")
 
-; Hex & RGB
-hexLabel := mainWindow.AddText("x10 y+10 w235", "Hex: #000000")
-rgbLabel := mainWindow.AddText("x255 yp w235", "RGB: 0, 0, 0")
-hexR := mainWindow.AddText("x10 y+5 w235", "R: 0")
-rgbR := mainWindow.AddText("x255 yp w235", "R: 0")
-hexG := mainWindow.AddText("x10 y+5 w235", "G: 0")
-rgbG := mainWindow.AddText("x255 yp w235", "G: 0")
-hexB := mainWindow.AddText("x10 y+5 w235", "B: 0")
-rgbB := mainWindow.AddText("x255 yp w235", "B: 0")
+labels := ["Hex", "RGB", "HSL", "HWB", "CMYK", "NCol", "XYZ", "Lab", "YIQ"]
+labelControls := Map()
+componentControls := Map()
 
-; HSL & HWB
-hslLabel := mainWindow.AddText("x10 y+10 w235", "HSL: hsl(0, 0%, 0%)")
-hwbLabel := mainWindow.AddText("x255 yp w235", "HWB: hwb(0, 0%, 0%)")
-hslH := mainWindow.AddText("x10 y+5 w235", "H: 0")
-hwbH := mainWindow.AddText("x255 yp w235", "H: 0")
-hslS := mainWindow.AddText("x10 y+5 w235", "S: 0%")
-hwbW := mainWindow.AddText("x255 yp w235", "W: 0")
-hslL := mainWindow.AddText("x10 y+5 w235", "L: 0%")
-hwbB := mainWindow.AddText("x255 yp w235", "B: 0")
+gridWidth := 3
+gridHeight := 3
+boxWidth := 200
+boxHeight := 120
+marginX := 10
+marginY := 10
 
-; CMYK & NCol
-cmykLabel := mainWindow.AddText("x10 y+10 w235", "CMYK: cmyk(0%, 0%, 0%, 100%)")
-ncolLabel := mainWindow.AddText("x255 yp w235", "Ncol: ncol(R0, 100%, 0%)")
-cmykC := mainWindow.AddText("x10 y+5 w235", "C: 0%")
-ncolH := mainWindow.AddText("x255 yp w235", "H: 0")
-cmykM := mainWindow.AddText("x10 y+5 w235", "M: 0%")
-ncolW := mainWindow.AddText("x255 yp w235", "W: 0%")
-cmykY := mainWindow.AddText("x10 y+5 w235", "Y: 0%")
-ncolB := mainWindow.AddText("x255 yp w155", "B: 0%")
-cmykK := mainWindow.AddText("x10 y+5 w235", "K: 100%")
+for index, label in labels {
+    col := Mod(index - 1, gridWidth)
+    row := (index - 1) // gridWidth
+    x := 10 + col * (boxWidth + marginX)
+    y := 100 + row * (boxHeight + marginY)
 
-; ABGR and BGR
-abgrLabel := mainWindow.AddText("x10 y+10 w235", "ABGR: FF000000")
-bgrLabel := mainWindow.AddText("x255 yp w235", "BGR: 000000")
+    groupBox := MainGui.Add("GroupBox", "x" x " y" y " w" boxWidth " h" boxHeight, label)
+    labelControls[label] := MainGui.Add("Text", "x" (x+10) " y" (y+20) " w180 vResult" label)
+    labelControls[label].SetFont("s10", "Consolas")
+    componentControls[label] := Map()
+    componentControls[label]["1"] := MainGui.Add("Text", "x" (x+10) " y" (y+40) " w180 c707070 vComponents" label "1")
+    componentControls[label]["2"] := MainGui.Add("Text", "x" (x+10) " y" (y+60) " w180 c707070 vComponents" label "2")
+    componentControls[label]["3"] := MainGui.Add("Text", "x" (x+10) " y" (y+80) " w180 c707070 vComponents" label "3")
+    componentControls[label]["1"].SetFont("s10", "Consolas")
+    componentControls[label]["2"].SetFont("s10", "Consolas")
+    componentControls[label]["3"].SetFont("s10", "Consolas")
 
-rgb    := Color(255, 66, 32)
-hex    := Color("#FF4220")
-hsl    := Color.FromHSL(9, 100, 56)
-hwb    := Color.FromHWB(9, 13, 0)
-cmyk   := Color.FromCMYK(0, 74, 87, 0)
-ncol   := Color.FromNCol("R15", 13, 0)
-MsgBox("This MsgBox shows the inaccuracies of the `"From*`" methods.`nAll of these were converted from the same color.`nResults will vary by color.`n`nFrom: rgb(255, 66, 32, 255)`n`nRGB: " rgb.Full "`nHex: " hex.Full "`nHSL: " hsl.Full "`nHWB: " hwb.Full "`nCMYK: " cmyk.Full "`nNcol: " ncol.Full, "Color.From*() Methods")
+    if (label == "CMYK") {
+        componentControls[label]["4"] := MainGui.Add("Text", "x" (x+10) " y" (y+100) " w180 c707070 vComponents" label "4")
+        componentControls[label]["4"].SetFont("s10", "Consolas")
+    }
+
+    clickArea := MainGui.Add("Text", "x" x " y" y " w" boxWidth " h" boxHeight " +BackgroundTrans")
+    clickArea.OnEvent("Click", CopyColorValue.Bind(label))
+}
 
 picker := ColorPicker(False)
-picker.OnUpdate := _UpdateColors
-picker.OnExit   := _ColorChosen
-picker.FontName := "Consolas"
-picker.FontSize := 24
-picker.TextFGColors := [ Color("4F0110"), Color("6390DD") ]
-picker.BorderColors := [ Color("0x4F0110"), Color("#6390DD") ]
+picker.OnUpdate := (_col) => colorPreview.Opt("+Background" . _col.ToHex("{R}{G}{B}").Full)
+picker.OnExit := PickerExit
+PickerExit(Color.Black) ; Set up the initial color to display
 
-colorBox.OnEvent("Click", (*) => picker.Start())
-mainWindow.OnEvent("Close", (*) => ExitApp())
+MainGui.Show()
 
-_UpdateColors(colorObj)
+convertBtn.OnEvent("Click", ConvertColor)
+pickBtn.OnEvent("Click", (*) => picker.Start())
+MainGui.OnEvent("Close", (*) => ExitApp())
+
+PickerExit(_col)
 {
-    hex := colorObj.ToHex("{R}{G}{B}")
-    colorBox.Opt("+Redraw +Background" hex.Full)
-    picker.TextBGColor := colorObj
-    picker.TextFGColor := colorObj.Invert()
+    global col := _col
+    inputEdit.Value := col.Full
+    ConvertColor(col)
 }
 
-_ColorChosen(colorObj)
+CopyColorValue(colorType, *)
 {
-    ;RGB
-    colorObj.RGBFormat := "{R}, {G}, {B}"
-    rgbLabel.Text := "RGB: " colorObj.Full
-    rgbR.Text := "R: " colorObj.R
-    rgbG.Text := "G: " colorObj.G
-    rgbB.Text := "B: " colorObj.B
-
-    ; Hex
-    hex := colorObj.ToHex("{R}{G}{B}")
-    hexLabel.Text := "Hex: #" hex.Full
-    hexR.Text := "R: " hex.R
-    hexG.Text := "G: " hex.G
-    hexB.Text := "B: " hex.B
-
-    ; HSL
-    hsl := colorObj.ToHSL("HSL: {H}, {S}%, {L}%")
-    hslLabel.Text := hsl.Full
-    hslH.Text := "H: " hsl.H
-    hslS.Text := "S: " hsl.S "%"
-    hslL.Text := "L: " hsl.L "%"
-
-    ; HWB
-    hwb := colorObj.ToHWB("HWB: {H}, {W}%, {B}%")
-    hwbLabel.Text := hwb.Full
-    hwbH.Text := "H: " hwb.H
-    hwbW.Text := "W: " hwb.W "%"
-    hwbB.Text := "B: " hwb.B "%"
-
-    ; CMYK
-    cmyk := colorObj.ToCMYK("CMYK: {C}%, {M}%, {Y}%, {K}%")
-    cmykLabel.Text := cmyk.Full
-    cmykC.Text := "C: " cmyk.C "%"
-    cmykM.Text := "M: " cmyk.M "%"
-    cmykY.Text := "Y: " cmyk.Y "%"
-    cmykK.Text := "K: " cmyk.K "%"
-
-    ; Ncol
-    ncol := colorObj.ToNcol("NCol: {H}, {W}%, {B}%")
-    ncolLabel.Text := ncol.Full
-    ncolH.Text := "H: " ncol.h
-    ncolW.Text := "W: " ncol.w "%"
-    ncolB.Text := "B: " ncol.b "%"
-
-    ; ABGR and BGR
-    abgrLabel.Text := "ABGR: " Format("0x{1:02X}{2:02X}{3:02X}{4:02X}", colorObj.A, colorObj.B, colorObj.G, colorObj.R)
-    bgrLabel.Text := "BGR: " Format("0x{1:02X}{2:02X}{3:02X}", colorObj.B, colorObj.G, colorObj.R)
-
-    ; Update text colors
-    for ctrl in [hexLabel, rgbLabel, hslLabel, hwbLabel, cmykLabel, ncolLabel, abgrLabel, bgrLabel]
-        ctrl.Opt("C" hex.Full)
+    fullValue := labelControls[colorType].Text
+    A_Clipboard := fullValue
+    ToolTip("Copied: " fullValue)
+    SetTimer(() => ToolTip(), -2000)
 }
 
-#1::mainWindow.Show("w500 h345")
+ConvertColor(*)
+{
+    input := inputEdit.Value
+
+    try
+    {
+        ; build this RegEx to match all color formats except hex, and pull out their type and channels
+        chT  := "(?<type>[a-z]+)\("                 ; Matches the origin color type "ncol", "rgb", "hsl", etc...
+        ch1  := "(?<ch1>[RYGCBM]?\d+(\.\d+)?)%?, ?" ; The first channel of the color
+        ch2  := "(?<ch2>-?\d+(\.\d+)?)%?, ?"          ; The second channel of the color
+        ch3  := "(?<ch3>-?\d+(\.\d+)?)%?(\)|, )?"     ; The third channel of the color
+        ch4  := "(?<ch4>-?\d+(\.\d+)?)?%?\)"          ; The fourth channel of the color (if color supports it)
+        funcNeedle := chT . ch1 . ch2 . ch3 . ch4
+
+        ; build this RegEx to match Hex (with or without 0x or #), RGB (in R, G, B format), and RGBA (in R, G, B, A format)
+        hex := "(?<hexSign>#|0x)?(?<hexVal>[0-9a-f]{3,8})(?!,)"
+        rCh := "(?<rgb>(?<r>\d{1,3}),\s*"
+        gCh := "(?<g>\d{1,3}),\s*"
+        bCh := "(?<b>\d{1,3})"
+        aCh := "(?:,\s*(?<a>\d{1,3}))?)"
+        rgbaNeedle := hex "|" rCh . gCh . bCh . aCh
+
+        if (RegExMatch(input, funcNeedle, &match))
+        {
+            switch (match.type)
+            {
+                case "rgb":
+                    col := Color(match.ch1, match.ch2, match.ch3)
+                case "rgba":
+                    col := Color(match.ch1, match.ch2, match.ch3, match.ch4)
+                case "hsl":
+                    col := Color.FromHSL(match.ch1, match.ch2, match.ch3)
+                case "hwb":
+                    col := Color.FromHWB(match.ch1, match.ch2, match.ch3)
+                case "cmyk":
+                    col := Color.FromCMYK(match.ch1, match.ch2, match.ch3, match.ch4)
+                case "ncol":
+                    col := Color.FromNCol(match.ch1, match.ch2, match.ch3)
+                case "xyz":
+                    col := Color.FromXYZ(match.ch1, match.ch2, match.ch3)
+                case "lab":
+                    col := Color.FromLab(match.ch1, match.ch2, match.ch3)
+                case "yiq":
+                    col := Color.FromYIQ(match.ch1, match.ch2, match.ch3)
+                default:
+                    throw Error("Error in color syntax (function).")
+            }
+        }
+        else if RegExMatch(input, rgbaNeedle, &match)
+        {
+            if match.hexSign and match.hexVal
+                col := Color(match.hexVal)
+            else if match.rgb and match.a
+                col := Color(match.r, match.g, match.b, match.a)
+            else if match.rgb
+                col := Color(match.r, match.g, match.b)
+            else
+                throw Error("Error in color syntax (non-function).")
+        }
+
+        colorPreview.Opt("+Background" . col.ToHex("{R}{G}{B}").Full)
+
+        hex := col.ToHex("#{R}{G}{B}")
+        labelControls["Hex"].Text := hex.Full
+        componentControls["Hex"]["1"].Text := "R: " hex.R
+        componentControls["Hex"]["2"].Text := "G: " hex.G
+        componentControls["Hex"]["3"].Text := "B: " hex.B
+
+        labelControls["RGB"].Text := col.Full
+        componentControls["RGB"]["1"].Text := "R: " col.R
+        componentControls["RGB"]["2"].Text := "G: " col.G
+        componentControls["RGB"]["3"].Text := "B: " col.B
+
+        hsl := col.ToHSL()
+        labelControls["HSL"].Text := hsl.Full
+        componentControls["HSL"]["1"].Text := "H: " hsl.H
+        componentControls["HSL"]["2"].Text := "S: " hsl.S
+        componentControls["HSL"]["3"].Text := "L: " hsl.L
+
+        hwb := col.ToHWB()
+        labelControls["HWB"].Text := hwb.Full
+        componentControls["HWB"]["1"].Text := "H: " hwb.H
+        componentControls["HWB"]["2"].Text := "W: " hwb.W
+        componentControls["HWB"]["3"].Text := "B: " hwb.B
+
+        cmyk := col.ToCMYK()
+        labelControls["CMYK"].Text := cmyk.Full
+        componentControls["CMYK"]["1"].Text := "C: " cmyk.C
+        componentControls["CMYK"]["2"].Text := "M: " cmyk.M
+        componentControls["CMYK"]["3"].Text := "Y: " cmyk.Y
+        componentControls["CMYK"]["4"].Text := "K: " cmyk.K
+
+        ncol := col.ToNCol()
+        labelControls["NCol"].Text := ncol.Full
+        componentControls["NCol"]["1"].Text := "H: " ncol.H
+        componentControls["NCol"]["2"].Text := "W: " ncol.W
+        componentControls["NCol"]["3"].Text := "B: " ncol.B
+
+        xyz := col.ToXYZ()
+        labelControls["XYZ"].Text := xyz.Full
+        componentControls["XYZ"]["1"].Text := "X: " Round(xyz.X, 2)
+        componentControls["XYZ"]["2"].Text := "Y: " Round(xyz.Y, 2)
+        componentControls["XYZ"]["3"].Text := "Z: " Round(xyz.Z, 2)
+
+        lab := col.ToLab()
+        labelControls["Lab"].Text := lab.Full
+        componentControls["Lab"]["1"].Text := "L: " Round(lab.L, 2)
+        componentControls["Lab"]["2"].Text := "a: " Round(lab.a, 2)
+        componentControls["Lab"]["3"].Text := "b: " Round(lab.b, 2)
+
+        yiq := col.ToYIQ()
+        labelControls["YIQ"].Text := yiq.Full
+        componentControls["YIQ"]["1"].Text := "Y: " Round(yiq.Y, 3)
+        componentControls["YIQ"]["2"].Text := "I: " Round(yiq.I, 3)
+        componentControls["YIQ"]["3"].Text := "Q: " Round(yiq.Q, 3)
+    }
+    catch Error as err
+    {
+        MsgBox("Error converting color: " err.Message)
+    }
+}
