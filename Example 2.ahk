@@ -1,4 +1,5 @@
 #Requires AutoHotKey v2.0
+#SingleInstance Force
 #Include ColorPicker.ahk
 #Include Color.ahk
 
@@ -9,54 +10,64 @@ TestGui.Opt("+Resize")
 startColor := Color("0xFF234567")
 endColor   := Color.Random()
 
-; Pre-Generate the Pulse Gradient, we'll make it from red, to green, and back to red
-pulseGradient := Color.Red.Gradient(300, Color.Green, Color.Red)
+; Pre-Generate the Pulse Gradient, we'll make it from red, to green, and back to red, with 360 total steps
+pulseGradient := Color.Red.Gradient(360, Color.Green, Color.Red)
+gradientPos := 1 ; Use this to keep track of where we are in the gradient
 for i, col in pulseGradient
-    pulseGradient[i] := col.ToHex("{R}{G}{B}").Full ; convert every Color in the array into a hex string formatted for use with Progress control
+{
+    ; convert every Color instance in the array into a
+    ; hex string formatted for use with Progress control
+    pulseGradient[i] := col.ToHex("{R}{G}{B}").Full
+}
 
-; Set variable for hue shift pulse, we'll add one to it and loop it back to zero when it hits 360, giving a rainbow effect
-hueShift := 0
+; Set the initial color for the Hue shift display,
+; we'll shift it by +1 every time the timer fires
+; giving a smooth, continuous, rainbow effect.
+hueBoxColor := Color.Red
 
 CreateControls()
 UpdateControls()
 TestGui.Show()
-
-SetTimer(PulseBar, 1000) ; Start the pulse timer
-SetTimer(PulseHue, 10) ; set the hue shift pulse timer
 
 MsgBox("
     (
         This demonstration shows some of the Capabilities of the Color class.
         Every individual box is displaying an instance of the Color class.
 
-        There are 149 boxes in total:
+        There are 151 boxes in total:
+        1 Box shifting through a 360 step red-green-red gradient,
+        1 box continuously cycling through the rainbow by shifting the hue.
         Single color operations, 70 boxes arranged in a grid (5x14).
-        There are also 20 boxes for Tetradic colors
-        15 Boxes for Triadic colors
+        There are also 20 boxes for Tetradic colors,
+        15 Boxes for Triadic colors,
         And 54 boxes for the gradient.
     )")
 
+SetTimer(PulseBar, 10) ; Start the red-green-red pulse timer
+SetTimer(PulseHue, 10) ; Start the hue shift pulse timer
+
 PulseBar(*)
 {
-    for col in pulseGradient
-    {
-        controls["Pulse"].Opt("Background" col)
-        Sleep(1)
-    }
+    ; Increment the position in the gradient array
+    global gradientPos := Mod(gradientPos + 1, pulseGradient.Length) + 1
+
+    ; Set the background color of the progress control to the value at the current position in the gradient array
+    controls["Pulse"].Opt("Background" pulseGradient[gradientPos])
 }
 
 PulseHue(*)
 {
-    ; Add one degree to the hue every iteration, looping back to 0 when we hit 360 degrees.
-    global hueShift := Mod(hueShift + 1, 360)
+    ; Shift the hue by one degree, looping back to 0 when we hit 360 degrees.
+    global hueBoxColor := hueBoxColor.ShiftHue(1)
 
-    ; Create the color from Hue, Saturation, and Lightness, then convert it to a formatted hex string
-    hex := Color.FromHSL(hueShift, 50, 50).ToHex("{R}{G}{B}").Full
+    ; Create a formatted string for the Hexadecimal representation.
+    hex := hueBoxColor.ToHex("{R}{G}{B}").Full
 
     ; Set the control's background color to the new hex value
     controls["HuePulse"].Opt("Background" hex)
 }
 
+;Color picker creation
 LaunchStartColorPicker(*)
 {
     picker := ColorPicker(False,, UpdateStartColor)
@@ -77,6 +88,7 @@ LaunchEndColorPicker(*)
     picker.Start()
 }
 
+; Randomizes start and end colors
 RandomizeColors(*)
 {
         global startColor := Color.Random()
@@ -84,6 +96,7 @@ RandomizeColors(*)
         UpdateControls()
 }
 
+; ColorPicker event handlers
 UpdateStartColor(_color)
 {
     global startColor := _color

@@ -6,7 +6,8 @@
  *  @version 1.2
  *  @author Komrad Toast (komrad.toast@hotmail.com)
  *  @see https://www.autohotkey.com/boards/viewtopic.php?f=83&t=132433
- *  @license
+ *  @license MIT
+ * 
  *  Copyright (c) 2024 Tyler J. Colby (Komrad Toast)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -1119,32 +1120,32 @@ class Color
         static rY := 0.212655
         static gY := 0.715158
         static bY := 0.072187
-     
+
         c1 := 255 & ( sRGB >> 16 )
         c2 := 255 & ( sRGB >> 8 )
         c3 := 255 & ( sRGB )
-     
+
         Loop 3 {
            c%A_Index% := c%A_Index% / 255
-           c%A_Index% := (c%A_Index% <= 0.04045) ? c%A_Index%/12.92 : ((c%A_Index%+0.055)/(1.055))**2.4
+           c%A_Index% := (c%A_Index% <= 0.04045) ? c%A_Index% / 12.92 : ((c%A_Index% + 0.055) / (1.055) ) ** 2.4
         }
-     
+
         v := rY*c1 + gY*c2 + bY*c3
-        v := (v <= 0.0031308) ? v * 12.92 : 1.055*(v**(1.0/2.4))-0.055
+        v := (v <= 0.0031308) ? v * 12.92 : 1.055 * (v ** (1.0/2.4)) - 0.055
         g := Round(v*255)
         return Color(g, g, g)
-     }
+    }
 
-     Sepia()
-     {
+    Sepia()
+    {
         r := this.R
         g := this.G
         b := this.B
-        
+
         newR := Min(Round((r * 0.393) + (g * 0.769) + (b * 0.189)), 255)
         newG := Min(Round((r * 0.349) + (g * 0.686) + (b * 0.168)), 255)
         newB := Min(Round((r * 0.272) + (g * 0.534) + (b * 0.131)), 255)
-        
+
         return Color(newR, newG, newB)
     }
 

@@ -95,17 +95,17 @@ ConvertColor(*)
         ; build this RegEx to match all color formats except hex, and pull out their type and channels
         chT  := "(?<type>[a-z]+)\("                 ; Matches the origin color type "ncol", "rgb", "hsl", etc...
         ch1  := "(?<ch1>[RYGCBM]?\d+(\.\d+)?)%?, ?" ; The first channel of the color
-        ch2  := "(?<ch2>-?\d+(\.\d+)?)%?, ?"          ; The second channel of the color
-        ch3  := "(?<ch3>-?\d+(\.\d+)?)%?(\)|, )?"     ; The third channel of the color
-        ch4  := "(?<ch4>-?\d+(\.\d+)?)?%?\)"          ; The fourth channel of the color (if color supports it)
+        ch2  := "(?<ch2>-?\d+(\.\d+)?)%?, ?"        ; The second channel of the color
+        ch3  := "(?<ch3>-?\d+(\.\d+)?)%?(\)|, )?"   ; The third channel of the color
+        ch4  := "(?<ch4>-?\d+(\.\d+)?)?%?\)"        ; The fourth channel of the color (if color supports it)
         funcNeedle := chT . ch1 . ch2 . ch3 . ch4
 
         ; build this RegEx to match Hex (with or without 0x or #), RGB (in R, G, B format), and RGBA (in R, G, B, A format)
-        hex := "(?<hexSign>#|0x)?(?<hexVal>[0-9a-f]{3,8})(?!,)"
-        rCh := "(?<rgb>(?<r>\d{1,3}),\s*"
-        gCh := "(?<g>\d{1,3}),\s*"
-        bCh := "(?<b>\d{1,3})"
-        aCh := "(?:,\s*(?<a>\d{1,3}))?)"
+        hex := "(?<hexSign>#|0x)?(?<hexVal>[0-9a-f]{3,8})(?!,)" ; Hex value, including an optional preceding "0x" or "#"
+        rCh := "(?<rgb>(?<r>\d{1,3}),\s*" ; Red
+        gCh := "(?<g>\d{1,3}),\s*"        ; Green
+        bCh := "(?<b>\d{1,3})"            ; Blue
+        aCh := "(?:,\s*(?<a>\d{1,3}))?)"  ; Alpha
         rgbaNeedle := hex "|" rCh . gCh . bCh . aCh
 
         if (RegExMatch(input, funcNeedle, &match))
