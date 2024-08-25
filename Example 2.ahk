@@ -62,7 +62,7 @@ UpdateGradientAnimation(*)
     startColor := startColor.ShiftHue(2)
     endColor := endColor.ShiftHue(2)
 
-    ;rgradient.ShiftHue(-2)
+    rgradient.ShiftHue(-2)
 
     CreateGradients()
 
