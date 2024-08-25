@@ -3,11 +3,11 @@
 /**
  *  Color.ahk
  *
- *  @version 1.2
+ *  @version 1.4
  *  @author Komrad Toast (komrad.toast@hotmail.com)
  *  @see https://www.autohotkey.com/boards/viewtopic.php?f=83&t=132433
  *  @license MIT
- * 
+ *
  *  Copyright (c) 2024 Tyler J. Colby (Komrad Toast)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -125,7 +125,7 @@ class Color
             hwb := RegExReplace(hwb, "{3:d}", "{B}")
             return hwb
         }
-        
+
         set
         {
             value := RegExReplace(value, "im){H}", "{1:d}")
@@ -147,7 +147,7 @@ class Color
             cmyk := RegExReplace(cmyk, "{4:d}", "{K}")
             return cmyk
         }
-        
+
         set
         {
             value := RegExReplace(value, "im){C}", "{1:d}")
@@ -231,6 +231,9 @@ class Color
         }
     }
 
+    /** @property {String} YIQFormat The Lab color code format for `Color.ToLab().Full` (e.g. `lab({L},{a},{b})`).
+     * To change the amount of decimal places, just add it after the channel: `{Y:2}` would round the `Y` Channel to 2 decimal places.
+     */
     YIQFormat
     {
         get
@@ -265,22 +268,23 @@ class Color
     _labFormat  := "lab({1:0.2f}, {2:0.2f}, {3:0.2f})"
     _yiqFormat  := "yiq({1:0.2f}, {2:0.2f}, {3:0.2f})"
 
-    static Black   => Color("Black")
-    static Silver  => Color("Silver")
-    static Gray    => Color("Gray")
-    static White   => Color("White")
-    static Maroon  => Color("Maroon")
-    static Red     => Color("Red")
-    static Purple  => Color("Purple")
-    static Fuchsia => Color("Fuchsia")
-    static Green   => Color("Green")
-    static Lime    => Color("Lime")
-    static Olive   => Color("Olive")
-    static Yellow  => Color("Yellow")
-    static Navy    => Color("Navy")
-    static Blue    => Color("Blue")
-    static Teal    => Color("Teal")
-    static Aqua    => Color("Aqua")
+    static Black       => Color("Black")
+    static Silver      => Color("Silver")
+    static Gray        => Color("Gray")
+    static White       => Color("White")
+    static Maroon      => Color("Maroon")
+    static Red         => Color("Red")
+    static Purple      => Color("Purple")
+    static Fuchsia     => Color("Fuchsia")
+    static Green       => Color("Green")
+    static Lime        => Color("Lime")
+    static Olive       => Color("Olive")
+    static Yellow      => Color("Yellow")
+    static Navy        => Color("Navy")
+    static Blue        => Color("Blue")
+    static Teal        => Color("Teal")
+    static Aqua        => Color("Aqua")
+    static Transparent => Color("Transparent")
 
     /**
      * @constructor Creates a new `Color` instance from the given color arguments
@@ -302,80 +306,59 @@ class Color
      */
     __New(colorArgs*)
     {
-        this.A := 255
-
         colorNames := Map(
             "Black" , "000000", "Silver", "C0C0C0", "Gray"  , "808080", "White"  , "FFFFFF",
             "Maroon", "800000", "Red"   , "FF0000", "Purple", "800080", "Fuchsia", "FF00FF",
             "Green" , "008000", "Lime"  , "00FF00", "Olive" , "808000", "Yellow" , "FFFF00",
-            "Navy"  , "000080", "Blue"  , "0000FF", "Teal"  , "008080", "Aqua"   , "00FFFF"
+            "Navy"  , "000080", "Blue"  , "0000FF", "Teal"  , "008080", "Aqua"   , "00FFFF",
         )
 
+        colorNames.Set("Transparent", "00000000")
 
-        if (colorArgs.Length == 0)
+        switch colorArgs.Length
         {
-            this.R := 0
-            this.G := 0
-            this.B := 0
-        }
-        else if (colorArgs.Length == 1)
-        {
-            if (colorNames.Has(colorArgs[1]))
-                hex := colorNames[colorArgs[1]]
-            else if (StrLen(colorArgs[1]) >= 3)
-                hex := RegExReplace(colorArgs[1], "^#|^0x", "")
-            else
-                throw Error("Invalid Color argument")
+            case 0:
+                this.R := 0
+                this.G := 0
+                this.B := 0
+                this.A := 255
+            case 1:
+                hex := colorArgs[1]
+                if (colorNames.Has(hex))
+                    hex := colorNames[hex]
 
-            if StrLen(hex) == 3
-            {
-                this.R := Integer("0x" . SubStr(hex, 1, 1))
-                this.G := Integer("0x" . SubStr(hex, 2, 1))
-                this.B := Integer("0x" . SubStr(hex, 3, 1))
-            }
-            else if StrLen(hex) == 4
-            {
-                this.R := Integer("0x" . SubStr(hex, 2, 1))
-                this.G := Integer("0x" . SubStr(hex, 3, 1))
-                this.B := Integer("0x" . SubStr(hex, 4, 1))
-                this.A := Integer("0x" . SubStr(hex, 1, 1))
-            }
-            else if StrLen(hex) == 6
-            {
-                this.R := Integer("0x" . SubStr(hex, 1, 2))
-                this.G := Integer("0x" . SubStr(hex, 3, 2))
-                this.B := Integer("0x" . SubStr(hex, 5, 2))
-            }
-            else if StrLen(hex) == 8
-            {
-                this.R := Integer("0x" . SubStr(hex, 3, 2))
-                this.G := Integer("0x" . SubStr(hex, 5, 2))
-                this.B := Integer("0x" . SubStr(hex, 7, 2))
-                this.A := Integer("0x" . SubStr(hex, 1, 2))
-            }
-        }
-        else if (colorArgs.Length == 3)
-        {
-            this.R := Clamp(colorArgs[1], 0, 255)
-            this.G := Clamp(colorArgs[2], 0, 255)
-            this.B := Clamp(colorArgs[3], 0, 255)
-        }
-        else if (colorArgs.Length == 4)
-        {
-            this.R := Clamp(colorArgs[1], 0, 255)
-            this.G := Clamp(colorArgs[2], 0, 255)
-            this.B := Clamp(colorArgs[3], 0, 255)
-            this.A := Clamp(colorArgs[4], 0, 255)
-        }
-        else
-        {
-            throw Error("Invalid Color arguments")
+                col := Color.FromHex(hex)
+                this.R := col.R
+                this.G := col.G
+                this.B := col.B
+                this.A := col.A
+            case 3, 4:
+                col := Color.FromRGB(colorArgs[1], colorArgs[2], colorArgs[3], colorArgs.Length == 4 ? colorArgs[4] : 255)
+                this.R := col.R
+                this.G := col.G
+                this.B := col.B
+                this.A := col.A
+            default:
+                throw Error("Invalid Color arguments")
         }
 
         this.Full := Format(this._rgbFormat, this.R, this.G, this.B, this.A)
-
-        Clamp(val, low, high) => Min(Max(val, low), high)
     }
+
+    /**
+     * Checks if this color is equal to another color.
+     * ___
+     * @returns {Boolean}
+     */
+    IsEqual(col) => this.ToInt() == col.ToInt()
+
+    /**
+    * Converts the Color object to its integer representation.
+    * The integer includes all four channels: Alpha, Red, Green, and Blue.
+    * ___
+    * @returns {Integer}
+    */
+    ToInt() => (this.A << 24) | (this.R << 16) | (this.G << 8) | this.B
 
     /**
      * Converts the stored color to Hexadecimal representation.
@@ -484,11 +467,11 @@ class Color
         r := this.R / 255
         g := this.G / 255
         b := this.B / 255
-    
+
         cmax := Max(r, g, b)
         cmin := Min(r, g, b)
         delta := cmax - cmin
-    
+
         if (delta == 0)
             h := 0
         else if (cmax == r)
@@ -497,10 +480,10 @@ class Color
             h := 60 * ((b - r) / delta + 2)
         else
             h := 60 * ((r - g) / delta + 4)
-    
+
         if (h < 0)
             h += 360
-    
+
         w := cmin
         bl := 1 - cmax
 
@@ -508,7 +491,7 @@ class Color
 
         if formatString
             this.HWBFormat := oldFormat
-    
+
         return {
             H: Round(h),
             W: Round(w * 100),
@@ -535,9 +518,9 @@ class Color
         r := this.R / 255
         g := this.G / 255
         b := this.B / 255
-    
+
         k := 1 - Max(r, g, b)
-        
+
         if (k == 1)
         {
             c := 0
@@ -555,7 +538,7 @@ class Color
 
         if formatString
             this.CMYKFormat := oldFormat
-    
+
         return {
             C: Round(c * 100),
             M: Round(m * 100),
@@ -584,18 +567,18 @@ class Color
         h := hwb.H
         w := hwb.W
         b := hwb.B
-    
+
         hueNames := ["R", "Y", "G", "C", "B", "M"]
         hueIndex := Floor(h / 60)
         huePercent := Round(Mod(h, 60) / 60 * 100)
-    
+
         ncolHue := hueNames[Mod(hueIndex, 6) + 1] . huePercent
 
         full := Format(this._nColFormat, ncolHue, w, b)
 
         if formatString
             this.NColFormat := oldFormat
-    
+
         return {
             H: ncolHue,
             W: w,
@@ -672,16 +655,16 @@ class Color
         D65 := Map(0, 95.047,
                    1, 100.000, ;Reference white, 6500K, Blue Sky at Noon
                    2, 108.883)
- 
+
         e := (6/29)**3
         k := (24389/27)
- 
+
         for i, c in XYZ
             XYZ[i] := XYZ[i] / D65[i] ;Find Relative Color values based on D65
 
         for i, c in XYZ
             XYZ[i] := (c > e) ? (c**(1/3)) : (((k * c) + 16) / 116) ;Lab Function, no anonymous functions :(
- 
+
         l := 116 *  XYZ[1] - 16
         a := 500 * (XYZ[0] - XYZ[1])
         b := 200 * (XYZ[1] - XYZ[2])
@@ -689,7 +672,7 @@ class Color
 
         if formatString
             this.LabFormat := oldFormat
- 
+
         return {
             L: l,
             a: a,
@@ -724,7 +707,7 @@ class Color
         r := this.R / 255
         g := this.G / 255
         b := this.B / 255
-    
+
         y := 0.299 * r + 0.587 * g + 0.114 * b
         i := 0.596 * r - 0.275 * g - 0.321 * b
         q := 0.212 * r - 0.523 * g + 0.311 * b
@@ -732,7 +715,7 @@ class Color
 
         if formatString
             this.YIQFormat := oldFormat
-    
+
         return {
             Y: y,
             I: i,
@@ -753,14 +736,16 @@ class Color
      * ___
      * @returns {Color}
      */
-    static FromRGB(colorArgs*) ; Syntactic Sugar
+    static FromRGB(r, g, b, a := 255)
     {
-        if (colorArgs.Length == 3)
-            return Color(colorArgs[1], colorArgs[2], colorArgs[3])
-        else if (colorArgs.Length == 4)
-            return Color(colorArgs[1], colorArgs[2], colorArgs[3], colorArgs[4])
-        else
-            throw Error("Invalid number of arguments passed to Color.FromRGB")
+        col := Color()
+        col.R := Clamp(r, 0, 255)
+        col.G := Clamp(g, 0, 255)
+        col.B := Clamp(b, 0, 255)
+        col.A := Clamp(a, 0, 255)
+        return col
+
+        Clamp(val, low, high) => Min(Max(val, low), high)
     }
 
     /**
@@ -768,40 +753,34 @@ class Color
      * ___
      * @returns {Color}
      */
-    static FromHex(hex) ; Syntactic Sugar
+    static FromHex(hex)
     {
-        if (StrLen(hex) >= 3)
-            hex := RegExReplace(hex, "^#|^0x", "")
-        else
-            throw Error("Invalid Hex Color argument")
+        hex := RegExReplace(hex, "^(#|0x)", "")
 
-        if StrLen(hex) == 3
+        switch StrLen(hex)
         {
-            R := Integer("0x" . SubStr(hex, 1, 1))
-            G := Integer("0x" . SubStr(hex, 2, 1))
-            B := Integer("0x" . SubStr(hex, 3, 1))
-            A := 255
-        }
-        else if StrLen(hex) == 4
-        {
-            R := Integer("0x" . SubStr(hex, 2, 1))
-            G := Integer("0x" . SubStr(hex, 3, 1))
-            B := Integer("0x" . SubStr(hex, 4, 1))
-            A := Integer("0x" . SubStr(hex, 1, 1))
-        }
-        else if StrLen(hex) == 6
-        {
-            R := Integer("0x" . SubStr(hex, 1, 2))
-            G := Integer("0x" . SubStr(hex, 3, 2))
-            B := Integer("0x" . SubStr(hex, 5, 2))
-            A := 255
-        }
-        else if StrLen(hex) == 8
-        {
-            R := Integer("0x" . SubStr(hex, 3, 2))
-            G := Integer("0x" . SubStr(hex, 5, 2))
-            B := Integer("0x" . SubStr(hex, 7, 2))
-            A := Integer("0x" . SubStr(hex, 1, 2))
+            case 3:
+                R := Integer("0x" . SubStr(hex, 1, 1))
+                G := Integer("0x" . SubStr(hex, 2, 1))
+                B := Integer("0x" . SubStr(hex, 3, 1))
+                A := 255
+            case 4:
+                R := Integer("0x" . SubStr(hex, 2, 1))
+                G := Integer("0x" . SubStr(hex, 3, 1))
+                B := Integer("0x" . SubStr(hex, 4, 1))
+                A := Integer("0x" . SubStr(hex, 1, 1))
+            case 6:
+                R := Integer("0x" . SubStr(hex, 1, 2))
+                G := Integer("0x" . SubStr(hex, 3, 2))
+                B := Integer("0x" . SubStr(hex, 5, 2))
+                A := 255
+            case 8:
+                R := Integer("0x" . SubStr(hex, 3, 2))
+                G := Integer("0x" . SubStr(hex, 5, 2))
+                B := Integer("0x" . SubStr(hex, 7, 2))
+                A := Integer("0x" . SubStr(hex, 1, 2))
+            default:
+                throw Error("Invalid Hex Color length")
         }
 
         return Color(R, G, B, A)
@@ -841,15 +820,15 @@ class Color
 
         HueToRGB(p, q, t)
         {
-            if (t < 0) 
+            if (t < 0)
                 t += 1
-            if (t > 1) 
+            if (t > 1)
                 t -= 1
-            if (t < 1/6) 
+            if (t < 1/6)
                 return p + (q - p) * 6 * t
-            if (t < 1/2) 
+            if (t < 1/2)
                 return q
-            if (t < 2/3) 
+            if (t < 2/3)
                 return p + (q - p) * (2/3 - t) * 6
             return p
         }
@@ -869,20 +848,20 @@ class Color
         h := Mod(h, 360) / 360
         w := Clamp(w, 0, 100) / 100
         b := Clamp(b, 0, 100) / 100
-    
+
         if (w + b >= 1)
         {
             g := w / (w + b)
             return Color(Round(g * 255), Round(g * 255), Round(g * 255))
         }
-    
+
         f := 1 - w - b
         rgb := HueToRGB(h)
-    
+
         r := Round((rgb.R * f + w) * 255)
         g := Round((rgb.G * f + w) * 255)
         b := Round((rgb.B * f + w) * 255)
-    
+
         return Color(r, g, b)
 
         Clamp(val, low, high) => Min(Max(val, low), high)
@@ -919,11 +898,11 @@ class Color
         m := Clamp(m, 0, 100) / 100
         y := Clamp(y, 0, 100) / 100
         k := Clamp(k, 0, 100) / 100
-    
+
         r := Round((1 - c) * (1 - k) * 255)
         g := Round((1 - m) * (1 - k) * 255)
         b := Round((1 - y) * (1 - k) * 255)
-    
+
         return Color(r, g, b)
 
         Clamp(val, low, high) => Min(Max(val, low), high)
@@ -943,11 +922,11 @@ class Color
         hueNames := "RYGCBM"
         hueIndex := InStr(hueNames, SubStr(h, 1, 1)) - 1
         huePercent := Integer(SubStr(h, 2))
-        
+
         h := Mod(hueIndex * 60 + huePercent * 0.6, 360)
         w := Clamp(w, 0, 100)
         b := Clamp(b, 0, 100)
-    
+
         return Color.FromHWB(h, w, b)
 
         Clamp(val, low, high) => Min(Max(val, low), high)
@@ -1043,14 +1022,58 @@ class Color
         r := y + 0.956 * i + 0.619 * q
         g := y - 0.272 * i - 0.647 * q
         b := y - 1.106 * i + 1.703 * q
-    
+
         r := Round(Max(0, Min(r * 255, 255)))
         g := Round(Max(0, Min(g * 255, 255)))
         b := Round(Max(0, Min(b * 255, 255)))
-    
+
         return Color(r, g, b)
     }
-    
+
+    /**
+     * Creates a `Color` instance from a temperaure
+     * ___
+     * @param {Number} temp The color temperature in Kelvin
+     * ___
+     * @returns {Color}
+     */
+    static FromTemp(temp, tint := 0)
+    {
+        temp := temp / 100
+        if (temp <= 66)
+            r := 255
+        else
+            r := Max(0, Min(255, 329.698727446 * ((temp - 60) ** -0.1332047592)))
+
+        ; Calculate Green
+        if (temp <= 66)
+            g := 99.4708025861 * Ln(temp) - 161.1195681661
+        else
+            g := 288.1221695283 * ((temp - 60) ** -0.0755148492)
+        g := Max(0, Min(255, g))
+
+        ; Calculate Blue
+        if (temp >= 66)
+            b := 255
+        else if (temp <= 19)
+            b := 0
+        else
+            b := Max(0, Min(255, 138.5177312231 * Ln(temp - 10) - 305.0447927307))
+
+        ; Apply tint
+        if (tint > 0)
+        {
+            g := Min(g + tint, 255)
+        }
+        else if (tint < 0)
+        {
+            m := Min(r - tint, Min(b - tint, 255))
+            r := r + m
+            b := b + m
+        }
+
+        return Color(r, g, b)
+    }
 
     /**
      * Creates a new `Color` by calculating the average of two or more colors.
@@ -1061,6 +1084,9 @@ class Color
      */
     static Average(colors*)
     {
+        if (colors[1] is ColorArray) or (colors[1] is Array)
+            colors := colors[1]
+
         r := 0
         g := 0
         b := 0
@@ -1085,6 +1111,9 @@ class Color
      */
     static Multiply(colors*)
     {
+        if (colors[1] is ColorArray) or (colors[1] is Array)
+            colors := colors[1]
+
         r := 1
         g := 1
         b := 1
@@ -1110,7 +1139,7 @@ class Color
      * Returns the Rec. 601 grayscale representation of the current color.
      * ___
      * @returns {Color}
-     * 
+     *
      * ___
      * @credit Iseahound
      */
@@ -1136,6 +1165,12 @@ class Color
         return Color(g, g, g)
     }
 
+    /**
+    * Applies a sepia filter to the current color.
+    * The sepia effect is achieved by adjusting the RGB values using specific coefficients.
+    * ___
+    * @returns {Color} A new Color object with the sepia filter applied.
+    */
     Sepia()
     {
         r := this.R
@@ -1299,7 +1334,7 @@ class Color
     {
         l1 := this.GetLuminance()
         l2 := _color.GetLuminance()
-        
+
         if (l1 > l2)
             return (l1 + 0.05) / (l2 + 0.05)
         else
@@ -1338,8 +1373,8 @@ class Color
         hsl := this.ToHSL()
         minLightness := Max(10, hsl.L - lightnessRange * 50)
         maxLightness := Min(90, hsl.L + lightnessRange * 50)
-    
-        colors := []
+
+        colors := ColorArray()
         step := (maxLightness - minLightness) / (count - 1)
         Loop count
         {
@@ -1361,9 +1396,9 @@ class Color
     Analogous(angle := 30, count := 3)
     {
         hsl := this.ToHSL()
-        colors := []
+        colors := ColorArray()
         colors.Push(this)
-    
+
         Loop count - 1
         {
             newH := Mod(hsl.H + angle * A_Index, 360)
@@ -1381,11 +1416,23 @@ class Color
     Triadic() => this.Analogous(120, 3)
 
     /**
-     * Generates a Tetradic color scheme from the current color. Tetradic colors are offset from the current by `90°`, `180°`, and `270°`.
+     * Generates a Tetradic color scheme from the current color.
+     * A color is offset from the current color by `angle`°,
+     * then the complements of both are retrieved.
      * ___
      * @returns {Color[4]}
      */
-    Tetradic() => this.Analogous(90, 4)
+    Tetradic(angle := 60)
+    {
+        col2 := this.ShiftHue(angle)
+        thisComp := this.Complement()
+        col2Comp := col2.Complement()
+
+        return ColorArray(this, col2, thisComp, col2Comp)
+    }
+
+    /** Generates a Square Color scheme, the colors are offset by 90°, 180°, and 270° from the current color */
+    Square() => this.Analogous(90, 4)
 
     /**
      * Produces a gradient from the current `Color` instance to any number of other color instances.
@@ -1398,53 +1445,1159 @@ class Color
      * ___
      * @returns {Color[]}
      */
-    Gradient(steps := 10, colors*)
+    Gradient(steps := 10, colors*) => Color.Gradient(steps, this, colors*)
+
+    /**
+     * Produces a gradient from each `Color` instance to the next.
+     * Gradient order is defined by the order the colors are supplied in.
+     * ___
+     * @param {Integer} [steps=10] How many steps for the ENTIRE gradient. This will be divided by the
+     * number of colors to determine the number of steps between each color.
+     * @param {Color...} colors The colors to interpolate between. Must be: `2 <= colors.Length <= steps`
+     * ___
+     * @returns {Color[]}
+     */
+    static Gradient(steps := 10, colors*) => Gradient(steps, colors*)
+}
+
+/**
+ * ColorArray class. Stores an array of Color objects.
+ * ___
+ * @constructor ```ColorArray(colors*)```
+ * ___
+ * @param colors - Color arguments to initialize the array.
+ * ___
+ * @example
+ * ColorArray(Color("Red"), Color.Green, Color("Blue"), Color("#0000FF"))
+ */
+class ColorArray extends Array
+{
+    /**
+     * @constructor Creates a new `ColorArray` instance from the given `Color` arguments
+     * ___
+     * @param colorArgs - `Color` arguments to initialize the `ColorArray` from.
+     * ___
+     * @example
+     * ColorArray(Color.Red, Color("#539A3D"), Color.FromHWB(311, 78, 65))
+     */
+    __New(colors*)
     {
-        colors.InsertAt(1, this)
-        gradient := []
-        totalColors := colors.Length
-    
-        if (totalColors < 2)
+        if (colors.Length == 1) and ((colors[1] is Array) or (colors[1] is ColorArray))
+            colors := colors[1]
+
+        for col in colors
+            if col is Color
+                this.Push(col)
+            else
+                throw ValueError("ColorArray: Argument must be a Color object", -1, col)
+    }
+
+    /**
+     * Swaps Colors at indexes a and b
+     * ___
+     * @param a First Color index to swap
+     * @param b Second Color index to swap
+     * ___
+     * @returns {ColorArray}
+     *
+     * ___
+     * @credit Descolada
+     */
+    Swap(a, b)
+    {
+        temp := this[b]
+        this[b] := this[a]
+        this[a] := temp
+        return this
+    }
+
+    /**
+     * Applies a function to each element in the array (mutates the array).
+     * ___
+     * @param func The mapping function that accepts one argument.
+     * @param arrays Additional arrays to be accepted in the mapping function
+     * ___
+     * @returns {ColorArray}
+     *
+     * ___
+     * @credit Descolada
+     */
+    Map(_func, cArrays*)
+    {
+        if not (_func is Func)
+            throw ValueError("Map: _func must be a function", -1)
+
+        for i, col in this
         {
-            throw Error("At least two colors are required for a gradient.")
+            var := _func.Bind(col?)
+
+            for _, cArr in cArrays
+                var := _func.Bind(cArr.Has(i) ? cArr[i] : unset)
+
+            try var := var()
+            this[i] := var
         }
 
-        if (totalColors > steps)
+        return this
+    }
+
+    /**
+     * Applies a function to each element in the array.
+     * ___
+     * @param func The callback function with arguments Callback(value[, index, array]).
+     * ___
+     * @returns {Array}
+     *
+     * ___
+     * @credit Descolada
+     * ___
+     * @example
+     * ; Outputs the hex value of ever color in the ColorArray
+     * colArray.ForEach((col) => OutputDebug(col.ToHex("#{R}{G}{B}").Full))
+     */
+    ForEach(_func)
+    {
+        if not (_func is Func)
+            throw ValueError("ForEach: _func must be a function", -1)
+
+        for index, col in this
+            _func(col, index, this)
+
+        return this
+    }
+
+    /**
+     * Keeps only values that satisfy the provided function
+     * ___
+     * @param func The filter function that accepts one argument.
+     * ___
+     * @returns {Array}
+     *
+     * ___
+     * @credit Descolada
+     * ___
+     * @example
+     * ; Keeps only colors who's Red channels are over 200
+     * cArray.Filter((col) => col.R > 200)
+     */
+    Filter(_func)
+    {
+        if not (_func is Func)
+            throw ValueError("Filter: _func must be a function", -1)
+
+        r := []
+
+        for v in this
+            if _func(v)
+                r.Push(v)
+
+        return this := r
+    }
+
+    /**
+     * Finds a value in the array and returns its index.
+     * ___
+     * @param value The value to search for.
+     * @param start Optional: the index to start the search from. Default is 1.
+     * ___
+     * @returns {Integer}
+     *
+     * ___
+     * @credit Descolada
+     */
+    IndexOf(_col, start := 1)
+    {
+        if not (_col is Color)
+            throw ValueError("IndexOf: _col must be a Color object", -1)
+        if not (start is Integer)
+            throw ValueError("IndexOf: start value must be an integer")
+
+        for i, v in this
         {
-            throw Error("More colors provided than steps. Please provide equal or fewer colors than steps.")
+            if i < start
+                continue
+
+            if v.IsEqual(_col)
+                return i
         }
 
-        segmentSteps := Floor(steps / (totalColors - 1))
+        return 0
+    }
 
-        Loop totalColors - 1
+    /**
+     * Finds a value satisfying the provided function and returns its index.
+     * ___
+     * @param func The condition function that accepts one argument.
+     * @param match Optional: is set to the found value
+     * @param start Optional: the index to start the search from. Default is 1.
+     * ___
+     * @credit Descolada
+     * ___
+     * @example
+     * colorArr.Find((col) => (col.ToNCol("ncol({H}, {W}%, {B}%").Full == "ncol(R70, 36%, 6%)"))
+     */
+    Find(_func, &match?, start := 1)
+    {
+        if not (_func is Func)
+            throw ValueError("Find: _func must be a function", -1)
+
+        for i, v in this
         {
-            startColor := colors[A_Index]
+            if i < start
+                continue
 
-            try
-                endColor := colors[A_Index + 1]
-            catch
-                endColor := colors[totalColors]  ; Use the last color if we've run out
-
-            Loop segmentSteps
+            if _func(v)
             {
-                weight := (A_Index - 1) / segmentSteps
-                gradient.Push(startColor.Mix(endColor, weight * 100))
+                match := v
+                return i
+            }
+        }
+        return 0
+    }
+
+    /**
+     * Finds all values satisfying the provided function and returns an array of indexes.
+     * ___
+     * @param func The condition function that accepts one argument.
+     * @param matches Optional: is set to the found value (`ColorArray`)
+     * @param start Optional: the index to start the search from. Default is 1.
+     * ___
+     * @returns {Array} An array of the indexes of the found Colors
+     * ___
+     * @example
+     * colorArr.FindAll((col) => col.GetLuminance() >= .5)
+     */
+    FindAll(_func, &matches?, start := 1)
+    {
+        if not (_func is Func)
+            throw ValueError("FindAll: _func must be a function", -1)
+
+        results := []
+        matches := ColorArray()
+
+        for i, v in this
+        {
+            if i < start
+                continue
+
+            if _func(v)
+            {
+                results.Push(i)
+                matches.Push(v)
             }
         }
 
-        ; Add the last color
-        gradient.Push(colors[totalColors])
+        return results
+    }
 
-        ; Trim or extend to match the exact number of steps
-        while (gradient.Length > steps)
+    /**
+     * Reverses the ColorArray
+     * ___
+     * @returns {ColorArray}
+     *
+     * ___
+     * @credit Descolada
+     */
+    Reverse()
+    {
+        len := this.Length + 1, max := (len // 2), i := 0
+
+        while ++i <= max
+            this.Swap(i, len - i)
+
+        return this
+    }
+
+    /**
+     * Counts the number of occurrences of a value
+     * ___
+     * @param value The value to count. Can also be a function.
+     *
+     * ___
+     * @credit Descolada
+     */
+    Count(col)
+    {
+        count := 0
+
+        for c in this
+            if c == col
+                 count++
+
+        return count
+    }
+
+    /**
+     * Moves the contents of the ColorArray in to a random order.
+     * ___
+     * @returns {Array}
+     *
+     * ___
+     * @credit Descolada
+     */
+    Shuffle()
+    {
+        len := this.Length
+        Loop len-1
+            this.Swap(A_index, Random(A_index, len))
+        return this
+    }
+
+    /**
+     * Adds the contents of another ColorArray to the end of this one.
+     * ___
+     * @param cArrays The ColroArrays that are used to extend this one.
+     * ___
+     * @returns {Array}
+     *
+     * ___
+     * @credit Descolada
+     */
+    Extend(cArrays*)
+    {
+        newArr := ColorArray()
+        for cArr in cArrays
         {
-            gradient.Pop()
-        }
-        while (gradient.Length < steps)
-        {
-            gradient.Push(colors[totalColors])
+            if not cArr is ColorArray
+                throw ValueError("Extend: argument must be a ColorArray", -1)
+
+            for _, col in cArr
+                if col is Color
+                    this.Push(col)
+                else
+                    throw ValueError("Extend: argument must contain Color objects", -1)
         }
 
-        return gradient
+        return this
+    }
+
+    /**
+    * Sorts the ColorArray based on the provided comparison function.
+    * If no comparison function is provided, it sorts based on the hexadecimal representation of the colors.
+    * Colors are sorted in Ascending order by default. Pass `False` as the first argument to sort in Descending order.
+    * ___
+    * @param {Boolean} ascending Optional boolean that controls whether the ColorArray is sorted in ascending or descinding order.
+    * @param {Function} compareFunc Optional comparison function that takes two Color objects as arguments and returns a number.
+    * ___
+    * @returns {ColorArray} The sorted ColorArray instance.
+    * ___
+    * @example
+    * colorArr.Sort()
+    * colorArr.Sort((a, b) => a.R - b.R)
+    * colorArr.Sort((a, b) => a.GetHue() - b.GetHue())
+    */
+    Sort(ascending := true, compareFunc := "")
+    {
+        if (compareFunc == "")
+            compareFunc := (a, b) => a.ToHex("0x{R}{G}{B}").Full - b.ToHex("0x{R}{G}{B}").Full
+
+        if (this.Length <= 1)
+            return this
+
+        pivot := this[this.Length // 2]
+        left := ColorArray()
+        right := ColorArray()
+
+        for i, item in this
+        {
+            if (i == this.Length // 2)
+                continue
+            if (compareFunc(item, pivot) < 0)
+                left.Push(item)
+            else
+                right.Push(item)
+        }
+
+        sorted := ColorArray()
+        sorted.Push(left.Sort(compareFunc)*)
+        sorted.Push(pivot)
+        sorted.Push(right.Sort(compareFunc)*)
+
+        for i, color in sorted
+            this[i] := color
+
+        if ascending
+            return this
+        else
+            return this.Reverse()
+    }
+
+    /**
+    * Removes all elements from the ColorArray.
+    * ___
+    * @returns {ColorArray} The empty ColorArray instance.
+    */
+    Clear() => this.RemoveAt(1, this.Length)
+
+    /**
+    * Calculates the average color of all colors in the ColorArray.
+    * ___
+    * @returns {Color} A new Color object representing the average color.
+    */
+    Average() => Color.Average(this)
+
+    /**
+    * Multiplies all colors in the ColorArray.
+    * ___
+    * @returns {Color} A new Color object resulting from the multiplication of all colors.
+    */
+    Mutiply() => Color.Multiply(this)
+
+    /**
+    * Replaces all colors in the ColorArray with random colors.
+    * ___
+    * @returns {ColorArray}
+    */
+    Random() => this.Map((col) => col := Color.Random())
+
+    /**
+    * Inverts all colors in the ColorArray.
+    * ___
+    * @returns {ColorArray}
+    */
+    Invert() => this.Map((col) => col := col.Invert())
+
+
+    /**
+    * Converts all colors in the ColorArray to grayscale.
+    * ___
+    * @returns {ColorArray}
+    */
+    Grayscale() => this.Map((col) => col := col.Grayscale())
+
+    /**
+    * Applies a sepia filter to all colors in the ColorArray.
+    * ___
+    * @returns {ColorArray}
+    */
+    Sepia() => this.Map((col) => col := col.Sepia())
+
+    /**
+    * Calculates the complement of all colors in the ColorArray.
+    * ___
+    * @returns {ColorArray}
+    */
+    Complement() => this.Map((col) => col := col.Complement())
+
+    /**
+    * Shifts the hue of all colors in the ColorArray by the specified number of degrees.
+    * ___
+    * @param {Number} degrees The number of degrees to shift the hue.
+    * ___
+    * @returns {ColorArray}
+    */
+    ShiftHue(degrees)       => this.Map((col) => col := col.ShiftHue(degrees))
+
+    /**
+    * Shifts the saturation of all colors in the ColorArray by the specified amount.
+    * ___
+    * @param {Number} amount The amount to shift the saturation. Positive values increase saturation, negative values decrease it.
+    * ___
+    * @returns {ColorArray}
+    */
+    ShiftSaturation(amount) => this.Map((col) => col := col.ShiftSaturation(amount))
+
+    /**
+    * Increases the saturation of all colors in the ColorArray by the specified percentage.
+    * ___
+    * @param {Number} percentage The percentage to increase the saturation.
+    * ___
+    * @returns {ColorArray} The ColorArray instance with increased saturations.
+    */
+    Saturate(percentage)    => this.Map((col) => col := col.Saturate(percentage))
+
+    /**
+    * Decreases the saturation of all colors in the ColorArray by the specified percentage.
+    * ___
+    * @param {Number} percentage The percentage to decrease the saturation.
+    * ___
+    * @returns {ColorArray} The ColorArray instance with decreased saturations.
+    */
+    Desaturate(percentage)  => this.Map((col) => col := col.Desaturate(percentage))
+
+    /**
+    * Shifts the lightness of all colors in the ColorArray by the specified amount.
+    * ___
+    * @param {Number} amount The amount to shift the lightness. Positive values increase lightness, negative values decrease it.
+    * ___
+    * @returns {ColorArray} The ColorArray instance with shifted lightness values.
+    */
+    ShiftLightness(amount)  => this.Map((col) => col := col.ShiftLightness(amount))
+
+    /**
+    * Increases the lightness of all colors in the ColorArray by the specified percentage.
+    * ___
+    * @param {Number} percentage The percentage to increase the lightness.
+    * ___
+    * @returns {ColorArray} The ColorArray instance with increased lightness values.
+    */
+    Lighten(percentage)     => this.Map((col) => col := col.Lighten(percentage))
+
+    /**
+    * Decreases the lightness of all colors in the ColorArray by the specified percentage.
+    * ___
+    * @param {Number} percentage The percentage to decrease the lightness.
+    * ___
+    * @returns {ColorArray} The ColorArray instance with decreased lightness values.
+    */
+    Darken(percentage)      => this.Map((col) => col := col.Darken(percentage))
+
+    /**
+    * Shifts the whiteness of all colors in the ColorArray by the specified amount.
+    * ___
+    * @param {Number} amount The amount to shift the whiteness. Positive values increase whiteness, negative values decrease it.
+    * ___
+    * @returns {ColorArray} The ColorArray instance with shifted whiteness values.
+    */
+    ShiftWhiteness(amount)  => this.Map((col) => col := col.ShiftWhiteness(amount))
+
+    /**
+    * Shifts the blackness of all colors in the ColorArray by the specified amount.
+    * ___
+    * @param {Number} amount The amount to shift the blackness. Positive values increase blackness, negative values decrease it.
+    * ___
+    * @returns {ColorArray} The ColorArray instance with shifted blackness values.
+    */
+    ShiftBlackness(amount)  => this.Map((col) => col := col.ShiftBlackness(amount))
+
+    /**
+    * Creates a gradient of colors between all colors in the ColorArray.
+    * ___
+    * @param {Number} [steps=10] The number of steps in the gradient.
+    * ___
+    * @returns {ColorArray}
+    */
+    Gradient(steps := 10)   => Color.Gradient(steps, this*)
+
+    /**
+    * Sorts the ColorArray by hue.
+    * ___
+    * @param {Boolean} [ascending=true] Sorts in ascending order if `True`, descending if `False`.
+    * @returns {ColorArray}
+    */
+    SortByHue(ascending := true)        => this.Sort(ascending, (a, b) => a.ToHSL().H - b.ToHSL().H)
+
+    /**
+    * Sorts the ColorArray by saturation.
+    * ___
+    * @param {Boolean} [ascending=true] Sorts in ascending order if `True`, descending if `False`.
+    * @returns {ColorArray}
+    */
+    SortBySaturation(ascending := true) => this.Sort(ascending, (a, b) => a.ToHSL().S - b.ToHSL().S)
+
+    /**
+    * Sorts the ColorArray by lightness.
+    * ___
+    * @param {Boolean} [ascending=true] Sorts in ascending order if `True`, descending if `False`.
+    * @returns {ColorArray}
+    */
+    SortByLightness(ascending := true)  => this.Sort(ascending, (a, b) => a.ToHSL().L - b.ToHSL().L)
+
+    /**
+    * Sorts the ColorArray by White Level.
+    * ___
+    * @param {Boolean} [ascending=true] Sorts in ascending order if `True`, descending if `False`.
+    * @returns {ColorArray}
+    */
+    SortByWhiteness(ascending := true)  => this.Sort(ascending, (a, b) => a.ToHWB().W - b.ToHWB().W)
+
+    /**
+    * Sorts the ColorArray by Black Level.
+    * ___
+    * @param {Boolean} [ascending=true] Sorts in ascending order if `True`, descending if `False`.
+    * @returns {ColorArray}
+    */
+    SortByBlackness(ascending := true)  => this.Sort(ascending, (a, b) => a.ToHWB().B - b.ToHWB().B)
+
+    /**
+    * Sorts the ColorArray by luminance.
+    * ___
+    * @param {Boolean} [ascending=true] Sorts in ascending order if `True`, descending if `False`.
+    * @returns {ColorArray}
+    */
+    SortByLuminance(ascending := true)  => this.Sort(ascending, (a, b) => a.GetLuminance() - b.GetLuminance())
+
+    /**
+    * Creates a ColorArray with random colors.
+    * ___
+    * @param {Integer} count The number of random colors to generate.
+    * ___
+    * @returns {ColorArray} A new ColorArray instance filled with random colors.
+    */
+    static Random(count)
+    {
+        if not (count is Integer)
+            throw ValueError("Random: count must be an integer")
+
+        cArr := ColorArray()
+
+        loop count
+            cArr.Push(Color.Random())
+
+        return cArr
+    }
+
+    /**
+    * Creates a ColorArray with a specified capacity, optionally filled with a given color.
+    * ___
+    * @param {Integer} count The capacity of the ColorArray to create.
+    * @param {Color} [col] Optional color to fill the array with.
+    * ___
+    * @returns {ColorArray}
+    */
+    static Create(count, col?)
+    {
+        if not (count is Integer)
+            throw ValueError("Create: count must be an integer")
+
+        if IsSet(col) and not (col is Color)
+            throw ValueError("Create: col must be a Color object")
+
+        cArr := ColorArray()
+        cArr.Capacity := count
+
+        if IsSet(col) and (col is Color)
+            loop count
+                cArr.Push(col)
+
+        return cArr
+    }
+}
+
+/**
+* Creates a Gradient from a set of colors.
+* ___
+* @constructor ```Gradient(steps := 10, colors*)```
+* ___
+* @param {Integer} [steps=10] The number of color steps in the gradient.
+* @param {...Color} colors The colors to use as starting points for the gradient.
+* ___
+* @example
+* gradient := Gradient(5, Color.Red, Color.Blue)
+* complexGradient := Gradient(20, Color.Red, Color.Green, Color.Blue, Color.Yellow)
+*/
+class Gradient extends Array
+{
+    /**
+     * The total number of color steps in the gradient.
+     * @type {Integer}
+     */
+    Steps        := 10
+
+    /**
+     * The number of steps between each pair of start colors.
+     * @type {Integer}
+     */
+    SubSteps     => Floor(this.Steps / (this.StartColors.Length - 1))
+
+    /**
+     * The array of colors used as starting points for the gradient.
+     * @type {ColorArray}
+     */
+    StartColors  := ColorArray()
+
+    /**
+     * An array containing the sub-gradients between each pair of start colors.
+     * @type {Array}
+     */
+    SubGradients := []
+
+    /**
+    * Creates a new Gradient instance.
+    * ___
+    * @constructor ```Gradient(steps := 10, colors*)```
+    * ___
+    * @param {Integer} [steps=10] The number of color steps in the gradient.
+    * @param {...Color} colors The colors to use as starting points for the gradient.
+    * ___
+    * @example
+    * gradient := Gradient(5, Color.Red, Color.Blue)
+    * complexGradient := Gradient(20, Color.Red, Color.Green, Color.Blue, Color.Yellow)
+    */
+    __New(steps := 10, colors*)
+    {
+        this.Steps := steps
+
+        if (colors.Length > 0)
+        {
+            if colors[1] is Array
+                colors := colors[1]
+
+            this.StartColors := ColorArray(colors*)
+            this.Interpolate()
+        }
+    }
+
+    /**
+    * Removes all elements from the ColorArray.
+    * ___
+    * @returns {ColorArray}
+    */
+    Clear() => this.RemoveAt(1, this.Length)
+
+    /**
+     * Keeps only values that satisfy the provided function
+     * ___
+     * @param func The filter function that accepts one argument.
+     * ___
+     * @returns {Array}
+     *
+     * ___
+     * @credit Descolada
+     * ___
+     * @example
+     * ; Keeps only colors who's Red channels are over 200
+     * _grad.Filter((col) => col.R > 200)
+     */
+    Filter(_func)
+    {
+        if not (_func is Func)
+            throw ValueError("Filter: _func must be a function", -1)
+
+        r := []
+
+        for v in this
+            if _func(v)
+                r.Push(v)
+
+        return this := r
+    }
+
+    /**
+     * Finds a value satisfying the provided function and returns its index.
+     * ___
+     * @param func The condition function that accepts one argument.
+     * @param match Optional: is set to the found value
+     * @param start Optional: the index to start the search from. Default is 1.
+     * ___
+     * @credit Descolada
+     * ___
+     * @example
+     * colorArr.Find((col) => (col.ToNCol("ncol({H}, {W}%, {B}%").Full == "ncol(R70, 36%, 6%)"))
+     */
+    Find(_func, &match?, start := 1)
+    {
+        if not (_func is Func)
+            throw ValueError("Find: _func must be a function", -1)
+
+        for i, v in this
+        {
+            if i < start
+                continue
+
+            if _func(v)
+            {
+                match := v
+                return i
+            }
+        }
+        return 0
+    }
+
+    /**
+     * Finds all values satisfying the provided function and returns an array of indexes.
+     * ___
+     * @param func The condition function that accepts one argument.
+     * @param matches Optional: is set to the found value (`ColorArray`)
+     * @param start Optional: the index to start the search from. Default is 1.
+     * ___
+     * @returns {Array} An array of the indexes of the found Colors
+     * ___
+     * @example
+     * colorArr.FindAll((col) => col.GetLuminance() >= .5)
+     */
+    FindAll(_func, &matches?, start := 1)
+    {
+        if not (_func is Func)
+            throw ValueError("FindAll: _func must be a function", -1)
+
+        results := ColorArray()
+        matches := ColorArray()
+
+        for i, v in this
+        {
+            if i < start
+                continue
+
+            if _func(v)
+            {
+                results.Push(i)
+                matches.Push(v)
+            }
+        }
+
+        return results
+    }
+
+    /**
+     * Counts the number of occurrences of a value
+     * ___
+     * @param value The value to count. Can also be a function.
+     *
+     * ___
+     * @credit Descolada
+     */
+    Count(value)
+    {
+        count := 0
+
+        if HasMethod(value)
+        {
+            for v in this
+                if value(v?)
+                    count++
+        }
+        else
+            for v in this
+                if v == value
+                    count++
+
+        return count
+    }
+
+    /**
+     * Applies a function to each element in the Gradient (mutates the Gradient).
+     * ___
+     * @param func The mapping function that accepts one argument.
+     * @param arrays Additional arrays to be accepted in the mapping function
+     * ___
+     * @returns {ColorArray}
+     *
+     * ___
+     * @credit Descolada
+     */
+    Map(_func, cArrays*)
+    {
+        if not (_func is Func)
+            throw ValueError("Map: _func must be a function", -1)
+
+        for i, col in this
+        {
+            var := _func.Bind(col?)
+
+            for _, cArr in cArrays
+                var := _func.Bind(cArr.Has(i) ? cArr[i] : unset)
+
+            try var := var()
+            this[i] := var
+        }
+
+        return this
+    }
+
+    /**
+     * Applies a function to each element in the array.
+     * ___
+     * @param func The callback function with arguments Callback(value[, index, array]).
+     * ___
+     * @returns {Array}
+     *
+     * ___
+     * @credit Descolada
+     * ___
+     * @example
+     * ; Outputs the hex value of ever color in the ColorArray
+     * colArray.ForEach((col) => OutputDebug(col.ToHex("#{R}{G}{B}").Full))
+     */
+    ForEach(_func)
+    {
+        if not (_func is Func)
+            throw ValueError("ForEach: _func must be a function", -1)
+
+        for index, col in this
+            _func(col, index, this)
+
+        return this
+    }
+
+    /**
+     * Finds a value in the array and returns its index.
+     * ___
+     * @param value The value to search for.
+     * @param start Optional: the index to start the search from. Default is 1.
+     * ___
+     * @returns {Integer}
+     *
+     * ___
+     * @credit Descolada
+     */
+    IndexOf(_col, start := 1)
+    {
+        if not (_col is Color)
+            throw ValueError("IndexOf: _col must be a Color object", -1)
+        if not (start is Integer)
+            throw ValueError("IndexOf: start value must be an integer")
+
+        for i, v in this
+        {
+            if i < start
+                continue
+
+            if v.IsEqual(_col)
+                return i
+        }
+
+        return 0
+    }
+
+    /**
+    * Interpolates between the start and end colors to create a gradient.
+    * ___
+    * @throws {Error} If there are fewer than 2 start colors.
+    * ___
+    * @returns {ColorArray} The ColorArray instance with interpolated colors.
+    */
+    Interpolate()
+    {
+        if (this.StartColors.Length < 2)
+            throw Error("Gradient requires at least 2 starting colors")
+
+        stepsPerGradient := Floor(this.Steps / (this.StartColors.Length - 1))
+        ;MsgBox("Making Gradient`nColors: " this.StartColors.Length "`nGradients: " this.StartColors.Length - 1 "`nSteps: " this.Steps "`nSteps/Grad: " stepsPerGradient)
+
+        loop this.StartColors.Length - 1
+        {
+            startColor := this.StartColors[A_Index]
+            endColor := this.StartColors[A_Index + 1]
+            subGradient := this.InterpolateBetween(startColor, endColor, stepsPerGradient)
+            this.SubGradients.Push(subGradient)
+        }
+
+        if this.Length > 0
+            this.Clear() ; Reset the gradient
+
+        for arr in this.SubGradients
+            for col in arr
+                this.Push(col)
+
+        while (this.Length < this.Steps)
+            this.Push(this.StartColors[this.StartColors.Length])
+        while (this.Length > this.Steps)
+            this.Pop()
+    }
+
+    /**
+    * Interpolates colors between two given colors.
+    * ___
+    * @param {Color} startColor The starting color of the interpolation.
+    * @param {Color} endColor The ending color of the interpolation.
+    * @param {Integer} steps The number of steps to interpolate between the colors.
+    * ___
+    * @returns {ColorArray} A ColorArray containing the interpolated colors.
+    * ___
+    * @example
+    * subGradient := gradient.InterpolateBetween(Color.Red, Color.Blue, 5)
+    */
+    InterpolateBetween(startColor, endColor, steps)
+    {
+        subGradient := ColorArray()
+        loop steps
+        {
+            newColor := startColor.Mix(endColor, 100 * ((A_Index - 1) / steps))
+            subGradient.Push(newColor)
+        }
+        return subGradient
+    }
+
+    /**
+    * Replaces the first instance of a color in the gradient's starting colors and re-interpolates between it and it's neighbors.
+    * ___
+    * @param {Color} oldColor The color to be replaced.
+    * @param {Color} newColor The new color to replace the old one.
+    * ___
+    * @returns {Boolean}
+    */
+    ReplaceColor(oldColor, newColor)
+    {
+        index := this.StartColors.IndexOf(oldColor)
+        if (index > 0)
+        {
+            this.StartColors[index] := newColor
+            this.InterpolateAdjacent(index)
+            return true
+        }
+        return false
+    }
+
+    /**
+    * Recalculates the interpolation for adjacent colors when a color is changed.
+    * ___
+    * @param {Integer} index The index of the changed color in the StartColors array.
+    * ___
+    * @returns {Boolean}
+    */
+    InterpolateAdjacent(index)
+    {
+        length := this.StartColors.Length
+        if (index < 1 || index > length)
+            return false
+
+        ; Recalculate only the affected sub-gradients
+        if (index > 1)
+        {
+            ; Recalculate the gradient between the previous color and the changed color
+            this.SubGradients[index - 1] := this.InterpolateBetween(
+                this.StartColors[index - 1],
+                this.StartColors[index],
+                this.SubSteps
+            )
+        }
+
+        if (index < length)
+        {
+            ; Recalculate the gradient between the changed color and the next color
+            this.SubGradients[index] := this.InterpolateBetween(
+                this.StartColors[index],
+                this.StartColors[index + 1],
+                this.SubSteps
+            )
+        }
+
+        ; Rebuild the main gradient
+        this.Clear()  ; Reset the gradient
+        for arr in this.SubGradients
+            for col in arr
+                this.Push(col)
+
+        ; Adjust the length if necessary
+        while (this.Length < this.Steps)
+            this.Push(this.StartColors[length])
+        while (this.Length > this.Steps)
+            this.Pop()
+
+        return true
+    }
+
+    /**
+    * Inverts all colors in the Gradient.
+    * ___
+    * @returns {Gradient}
+    */
+    Invert() => this.Map((col) => col := col.Invert())
+
+    /**
+    * Converts all colors in the Gradient to grayscale.
+    * ___
+    * @returns {Gradient}
+    */
+    Grayscale() => this.Map((col) => col := col.Grayscale())
+
+    /**
+    * Applies a sepia filter to all colors in the Gradient.
+    * ___
+    * @returns {Gradient}
+    */
+    Sepia() => this.Map((col) => col := col.Sepia())
+
+    /**
+    * Shifts the hue of all colors in the Gradient by the specified number of degrees.
+    * ___
+    * @param {Number} degrees The number of degrees to shift the hue.
+    * ___
+    * @returns {Gradient}
+    */
+    ShiftHue(degrees) => this.Map((col) => col := col.ShiftHue(degrees))
+
+    /**
+    * Shifts the saturation of all colors in the Gradient by the specified amount.
+    * ___
+    * @param {Number} amount The amount to shift the saturation. Positive values increase saturation, negative values decrease it.
+    * ___
+    * @returns {Gradient}
+    */
+    ShiftSaturation(amount) => this.Map((col) => col := col.ShiftSaturation(amount))
+
+    /**
+    * Increases the saturation of all colors in the Gradient by the specified percentage.
+    * ___
+    * @param {Number} percentage The percentage to increase the saturation.
+    * ___
+    * @returns {Gradient} The Gradient instance with increased saturations.
+    */
+    Saturate(percentage) => this.Map((col) => col := col.Saturate(percentage))
+
+    /**
+    * Decreases the saturation of all colors in the Gradient by the specified percentage.
+    * ___
+    * @param {Number} percentage The percentage to decrease the saturation.
+    * ___
+    * @returns {Gradient} The Gradient instance with decreased saturations.
+    */
+    Desaturate(percentage) => this.Map((col) => col := col.Desaturate(percentage))
+
+    /**
+    * Shifts the lightness of all colors in the Gradient by the specified amount.
+    * ___
+    * @param {Number} amount The amount to shift the lightness. Positive values increase lightness, negative values decrease it.
+    * ___
+    * @returns {Gradient} The Gradient instance with shifted lightness values.
+    */
+    ShiftLightness(amount) => this.Map((col) => col := col.ShiftLightness(amount))
+
+    /**
+    * Increases the lightness of all colors in the Gradient by the specified percentage.
+    * ___
+    * @param {Number} percentage The percentage to increase the lightness.
+    * ___
+    * @returns {Gradient} The Gradient instance with increased lightness values.
+    */
+    Lighten(percentage) => this.Map((col) => col := col.Lighten(percentage))
+
+    /**
+    * Decreases the lightness of all colors in the Gradient by the specified percentage.
+    * ___
+    * @param {Number} percentage The percentage to decrease the lightness.
+    * ___
+    * @returns {Gradient} The Gradient instance with decreased lightness values.
+    */
+    Darken(percentage) => this.Map((col) => col := col.Darken(percentage))
+
+    /**
+    * Shifts the whiteness of all colors in the Gradient by the specified amount.
+    * ___
+    * @param {Number} amount The amount to shift the whiteness. Positive values increase whiteness, negative values decrease it.
+    * ___
+    * @returns {Gradient} The Gradient instance with shifted whiteness values.
+    */
+    ShiftWhiteness(amount) => this.Map((col) => col := col.ShiftWhiteness(amount))
+
+    /**
+    * Shifts the blackness of all colors in the Gradient by the specified amount.
+    * ___
+    * @param {Number} amount The amount to shift the blackness. Positive values increase blackness, negative values decrease it.
+    * ___
+    * @returns {Gradient} The Gradient instance with shifted blackness values.
+    */
+    ShiftBlackness(amount) => this.Map((col) => col := col.ShiftBlackness(amount))
+
+    /**
+    * Calculates the complement of all colors in the Gradient.
+    * ___
+    * @returns {Gradient}
+    */
+    Complement() => this.Map((col) => col := col.Complement())
+
+
+    /**
+    * Creates a new Gradient with random colors.
+    * ___
+    * @param {Integer} count The number of random colors to generate.
+    * @param {Integer} [steps=10] The number of steps in the whole gradient.
+    * ___
+    * @returns {Gradient}
+    */
+    static Random(count, steps := 10)
+    {
+        if not (count is Integer)
+            throw ValueError("Random: count must be an integer")
+
+        cols := []
+        loop count
+        {
+            cols.Push(Color.Random())
+        }
+
+        newGrad := Gradient(steps, cols*)
+        return newGrad
     }
 }
