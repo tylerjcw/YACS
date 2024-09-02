@@ -45,6 +45,11 @@
 **/
 class Color
 {
+    R: i32
+    G: i32
+    B: i32
+    A: i32
+
     /** @property {String} HexFormat The hexadecimal color code format for `Color.ToHex().Full` (e.g. `#{R}{G}{B}{A}`). */
     HexFormat
     {
@@ -358,7 +363,18 @@ class Color
     * ___
     * @returns {Integer}
     */
-    ToInt() => (this.A << 24) | (this.R << 16) | (this.G << 8) | this.B
+    ToInt(mode := 1)
+    {
+        switch mode
+        {
+            case 1: ; GDI+ ARGB Format
+                return (this.A << 24) | (this.R << 16) | (this.G << 8) | this.B
+            case 2: ; GDI BGR Format
+                return (this.B << 16) | (this.G << 8) | this.R
+            case 3: ; AHK "+Background" format
+                return this.ToHex("{R}{G}{B}").Full
+        }
+    }
 
     /**
      * Converts the stored color to Hexadecimal representation.
