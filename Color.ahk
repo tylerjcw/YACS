@@ -312,10 +312,10 @@ class Color
     __New(colorArgs*)
     {
         colorNames := Map(
-            "Black" , "000000", "Silver", "C0C0C0", "Gray"  , "808080", "White"  , "FFFFFF",
-            "Maroon", "800000", "Red"   , "FF0000", "Purple", "800080", "Fuchsia", "FF00FF",
-            "Green" , "008000", "Lime"  , "00FF00", "Olive" , "808000", "Yellow" , "FFFF00",
-            "Navy"  , "000080", "Blue"  , "0000FF", "Teal"  , "008080", "Aqua"   , "00FFFF",
+            "Black" , "FF000000", "Silver", "FFC0C0C0", "Gray"  , "FF808080", "White"  , "FFFFFFFF",
+            "Maroon", "FF800000", "Red"   , "FFFF0000", "Purple", "FF800080", "Fuchsia", "FFFF00FF",
+            "Green" , "FF008000", "Lime"  , "FF00FF00", "Olive" , "FF808000", "Yellow" , "FFFFFF00",
+            "Navy"  , "FF000080", "Blue"  , "FF0000FF", "Teal"  , "FF008080", "Aqua"   , "FF00FFFF",
         )
 
         colorNames.Set("Transparent", "00000000")
